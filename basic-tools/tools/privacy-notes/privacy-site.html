@@ -37,7 +37,8 @@
   }
 
   .shell{
-    max-width:1180px;
+    width:90%;
+    max-width:none;
     margin:0 auto;
     padding:40px 28px 64px;
   }
@@ -82,13 +83,9 @@
 
   .layout{
     display:grid;
-    grid-template-columns:minmax(0,380px) minmax(0,1fr);
+    grid-template-columns:1fr;
     gap:24px;
     align-items:start;
-  }
-
-  @media (max-width: 900px){
-    .layout{grid-template-columns:1fr;}
   }
 
   .panel{
@@ -319,6 +316,25 @@
     margin:0 0 16px;
   }
 
+  .slug-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:14px;
+  }
+
+  .slug-field{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--surface-2);
+    cursor:text;
+  }
+
+  .slug-field:focus{
+    color:var(--ink);
+  }
+
   .preview-meta{
     display:flex;
     flex-wrap:wrap;
@@ -428,6 +444,10 @@
         </div>
         <div class="preview-surface">
           <h3><span class="comp_name">[Company Name]</span> — Do Not Sell or Share My Personal Information</h3>
+          <div class="slug-row">
+            <input type="text" id="slugOutput" class="text-input slug-field" readonly spellcheck="false">
+            <button class="btn btn-copy" id="copySlugBtn">Copy</button>
+          </div>
         </div>
       </div>
 
@@ -585,12 +605,17 @@
   }
 
   document.getElementById("copyPageBtn").addEventListener("click", (e) => {
-    const textToCopy = document.querySelector(".preview-surface").innerText.trim();
+    const textToCopy = document.querySelector(".preview-surface h3").innerText.trim();
     copyToClipboard(textToCopy, e.currentTarget);
   });
 
   document.getElementById("copyCodeBtn").addEventListener("click", (e) => {
     const textToCopy = outputCode.innerText.trim();
+    copyToClipboard(textToCopy, e.currentTarget);
+  });
+
+  document.getElementById("copySlugBtn").addEventListener("click", (e) => {
+    const textToCopy = document.getElementById("slugOutput").value;
     copyToClipboard(textToCopy, e.currentTarget);
   });
 
@@ -603,6 +628,52 @@
     if (items.length === 1) return items[0];
     if (items.length === 2) return `${items[0]} or ${items[1]}`;
     return `${items.slice(0, -1).join(", ")}, or ${items[items.length - 1]}`;
+  }
+
+  // ---------- Number -> words (supports 0–999,999) ----------
+  const ONES = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+    "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  const TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+
+  function threeDigitsToWords(n) {
+    let parts = [];
+    if (n >= 100) {
+      parts.push(ONES[Math.floor(n / 100)], "hundred");
+      n %= 100;
+    }
+    if (n >= 20) {
+      parts.push(TENS[Math.floor(n / 10)]);
+      if (n % 10) parts.push(ONES[n % 10]);
+    } else if (n > 0) {
+      parts.push(ONES[n]);
+    }
+    return parts;
+  }
+
+  function numberToWords(num) {
+    num = Math.trunc(Math.abs(num));
+    if (num === 0) return "zero";
+    let chunks = [];
+    if (num >= 1000) {
+      chunks.push(...threeDigitsToWords(Math.floor(num / 1000)), "thousand");
+      num %= 1000;
+    }
+    if (num > 0) chunks.push(...threeDigitsToWords(num));
+    return chunks.join(" ");
+  }
+
+  // ---------- Slug generator ----------
+  // "/" -> "or", "&" -> "and", "#<n>" -> "number <n in words>",
+  // lowercase, non-alphanumerics -> "-", collapse/trim hyphens.
+  function generateSlug(text) {
+    return text
+      .replace(/#\s*(\d+)/g, (_, num) => ` number ${numberToWords(parseInt(num, 10))} `)
+      .replace(/\//g, " or ")
+      .replace(/&/g, " and ")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   }
 
   // ---------- Core render ----------
@@ -624,6 +695,10 @@
 
     // Preview
     document.querySelectorAll(".comp_name").forEach(span => span.textContent = company);
+
+    // Slug
+    const headingText = `${company} — Do Not Sell or Share My Personal Information`;
+    document.getElementById("slugOutput").value = generateSlug(headingText);
 
     // Code output
     let updatedContent = originalTemplate
