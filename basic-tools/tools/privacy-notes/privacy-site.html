@@ -615,7 +615,7 @@
 
   // ---------- Built-in Do Not Sell / Share template ----------
   const originalTemplate = `<!-- wp:html -->
-<p><span class="comp_name">[Company Name]</span> respects your privacy.. We do not sell your personal information for money. Some limited information may be shared with service providers (such as analytics tools or advertising platforms), which may use it for analytics or cross-context behavioral advertising (for example, showing ads across different websites). California residents have the right to opt out of this sharing at any time.</p>
+<p><span class="comp_name">[Company Name]</span> respects your privacy. We do not sell your personal information for money. Some limited information may be shared with service providers (such as analytics tools or advertising platforms), which may use it for analytics or cross-context behavioral advertising (for example, showing ads across different websites). California residents have the right to opt out of this sharing at any time.</p>
  
 <p>California law (the California Consumer Privacy Act and California Privacy Rights Act) gives California residents the right to opt out of the sale or sharing of their personal information. This page explains those rights and how you can exercise them.</p>
  
@@ -876,13 +876,13 @@
 
   // ---------- Code tab: independent starter content ----------
   // Seeded once on load with a static, editable copy — never touched by Home's updateTemplate().
-  document.getElementById("outputCodeHtml").value = originalTemplate;
+  const codeTabHtml = `<span class="dns"><a href="/COMPANY_NAME-do-not-sell-or-share-my-personal-information">Do Not Sell/Share My Personal Information</a></span>`;
+  document.getElementById("outputCodeHtml").value = codeTabHtml;
 
-  const companionCSS = `/* Do Not Sell or Share notice — companion styles */
-.privacy_list h2 { font-weight:600; font-size:25px; line-height:100%; margin: 30px auto 20px; display: inline-block;}
+  const codeTabCss = `.privacy_list h2 { font-weight:600; font-size:25px; line-height:100%; margin: 30px auto 20px; display: inline-block;}
 main a[href^="tel:"]:hover mark{text-decoration:underline;}
 .privacy_list h3{font-weight: 600; font-size: 20px;margin-bottom:15px;}`;
-  document.getElementById("outputCodeCss").value = companionCSS;
+  document.getElementById("outputCodeCss").value = codeTabCss;
 
   // ---------- Sidenav tab switching ----------
   const navButtons = document.querySelectorAll(".nav-btn");
