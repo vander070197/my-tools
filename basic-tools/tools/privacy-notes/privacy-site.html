@@ -45,21 +45,8 @@
 
   <button class="btn btn-outline-danger" id="resetBtn">Reset</button>
 
-  <!-- File upload -->
-  <div class="mb-3">
-    <label for="fileInput" class="form-label">Load Privacy Template (.txt):</label>
-    <div class="d-flex align-items-center">
-      <strong id="filePath" class="me-2">D:\Vander\1-----PDQA-FILES\sample-outputs\basic-tools\tools\privacy-notes\privacy-contents</strong>
-      <!-- Copy Path Button -->
-      <button class="btn btn-outline-secondary btn-sm" id="copyPathBtn" title="Copy Path">
-        <i class="bi bi-clipboard"></i>
-      </button>
-    </div>
-    <input type="file" id="fileInput" class="form-control mt-2" accept=".txt">
-  </div>
-
   <!-- Live Preview -->
-  <div class="d-flex justify-content-between align-items-center mb-2">
+  <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
     <h5 class="mb-0">Live Preview</h5>
     <button class="btn btn-sm btn-outline-primary" id="copyPageBtn">Copy Preview</button>
   </div>
@@ -77,17 +64,55 @@
     <h5 class="mb-0">Generated Code</h5>
     <button class="btn btn-sm btn-outline-primary" id="copyCodeBtn">Copy Code</button>
   </div>
-  <code id="outputCode">Upload a template file...</code>
+  <code id="outputCode"></code>
 
   <script>
     const companyInput = document.getElementById("companyInput");
     const emailInput = document.getElementById("emailInput");
     const phoneInput = document.getElementById("phoneInput");
     const outputCode = document.getElementById("outputCode");
-    const fileInput = document.getElementById("fileInput");
-    const filePath = document.getElementById("filePath").textContent;
 
-    let originalTemplate = "";
+    // ✅ Built-in Do Not Sell / Share template (no file upload needed)
+    const originalTemplate = `<!-- wp:html -->
+<p><span class="comp_name">[Company Name]</span> respects your privacy. We do not sell your personal information for money. Some limited information may be shared with service providers (such as analytics tools or advertising platforms), which may use it for analytics or cross-context behavioral advertising (for example, showing ads across different websites). California residents have the right to opt out of this sharing at any time.</p>
+ 
+<p>California law (the California Consumer Privacy Act and California Privacy Rights Act) gives California residents the right to opt out of the sale or sharing of their personal information. This page explains those rights and how you can exercise them.</p>
+ 
+<p><strong>Your Rights</strong></p>
+<p>If you are a California resident, you have the right to:</p>
+<ul class="bullet">
+    <li>Know whether your personal information is being sold or shared.</li>
+    <li>Opt out of the sale or sharing of your personal information at any time.</li>
+    <li>Request confirmation regarding how your data is collected, used, and whether it is sold or shared</li>
+</ul>
+ 
+<p>We will not discriminate against you for exercising these rights.</p>
+ 
+<p><strong>How We Use and Protect Information</strong></p>
+<p>We may share your information only in these limited circumstances:</p>
+<ul class="bullet">
+    <li>Service providers who support our business operations under confidentiality and security obligations.</li>
+    <li>Legal or regulatory requirements when required by law.</li>
+    <li>Business transfers if we are involved in a merger, acquisition, or sale of assets.</li>
+    <li>With your consent for any other specific purpose.</li>
+</ul>
+ 
+<p>We apply strict safeguards: credentials and files are stored only in approved systems, access is limited to authorized personnel, and access rights are removed when roles change.</p>
+<p>Some analytics and advertising platforms may use activity data to deliver targeted advertising across websites. California residents can opt out of this sharing.</p>
+ 
+<p><strong>How to Opt Out</strong></p>
+<p>While we do not sell personal information for money, you may submit a request to opt out of the sharing of your information for analytics or advertising purposes, or to ensure your preferences are recorded. Contact us:</p>
+
+<ul class="bullet">
+    <li>By email: <a href="mailto:value_here" class="email_val">[Client's Email Address]</a></li>
+    <li>By phone: <a href="tel:value_here" class="phone_val">[Client's Phone Number]</a></li>
+</ul>
+ 
+<p>Include your full name and the contact information you used with us (such as your email address).</p>
+ 
+<p><strong>Updates</strong></p>
+<p>If our practices change, we will update this page and provide notice before selling or sharing any personal information.</p>
+<!-- /wp:html -->`;
 
     // ✅ Copy helper
     function copyToClipboard(text) {
@@ -109,10 +134,6 @@
     }
 
     // ✅ Copy buttons
-    document.getElementById("copyPathBtn").addEventListener("click", () => {
-      copyToClipboard(filePath);
-    });
-
     document.getElementById("copyPageBtn").addEventListener("click", () => {
       const textToCopy = document.querySelector(".page_title_con p").innerText.trim();
       copyToClipboard(textToCopy);
@@ -123,24 +144,8 @@
       copyToClipboard(textToCopy);
     });
 
-    // Load file when user selects one
-    fileInput.addEventListener("change", function () {
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        originalTemplate = e.target.result;
-        outputCode.textContent = originalTemplate;
-        updateTemplate(); // refresh with inputs
-      };
-      reader.readAsText(file);
-    });
-
-    // Common update function (Company, Emails, Phones)
+    // Common update function (Company, Emails, Phones) — runs live as inputs change
     function updateTemplate() {
-      if (!originalTemplate) return;
-
       const company = companyInput.value.trim() || "[Company Name]";
       const emails = emailInput.value.split(/[\n,]+/).map(e => e.trim()).filter(e => e);
       const phones = phoneInput.value.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
@@ -148,13 +153,13 @@
       // ✅ Wrap emails in <a>
       const emailLinks = emails.map(email => {
         return `<a class="email_val" href="${email.includes("@") ? `mailto:${email}` : "#"}">${email}</a>`;
-      }).join(", ") || `<a class="email_val" href="#">[Client’s Email Address]</a>`;
+      }).join(", ") || `<a class="email_val" href="#">[Client's Email Address]</a>`;
 
       // ✅ Wrap phones in <a>
       const phoneLinks = phones.map(phone => {
         const telValue = phone.replace(/\D/g, "");
         return `<a class="phone_val" href="${telValue ? `tel:${telValue}` : "#"}">${phone}</a>`;
-      }).join(", ") || `<a class="phone_val" href="#">[Client’s Phone Number]</a>`;
+      }).join(", ") || `<a class="phone_val" href="#">[Client's Phone Number]</a>`;
 
       // ✅ Update Preview
       document.querySelectorAll(".comp_name").forEach(span => span.textContent = company);
@@ -170,7 +175,7 @@
       outputCode.textContent = updatedContent;
     }
 
-    // Attach input listeners
+    // Attach input listeners — real-time updates
     companyInput.addEventListener("input", updateTemplate);
     emailInput.addEventListener("input", updateTemplate);
     phoneInput.addEventListener("input", updateTemplate);
@@ -188,14 +193,11 @@
       companyInput.value = "";
       emailInput.value = "";
       phoneInput.value = "";
-
-      document.querySelectorAll(".comp_name").forEach(span => span.textContent = "[Company Name]");
-      document.querySelector(".email_preview").innerHTML = `<a class="email_val" href="#">[Client’s Email Address]</a>`;
-      document.querySelector(".phone_preview").innerHTML = `<a class="phone_val" href="#">[Client’s Phone Number]</a>`;
-
-      outputCode.textContent = "Upload a template file...";
-      originalTemplate = "";
+      updateTemplate();
     });
+
+    // Initial render on page load
+    updateTemplate();
   </script>
 </body>
 </html>
