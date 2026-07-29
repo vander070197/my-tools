@@ -428,17 +428,6 @@
         </div>
         <div class="preview-surface">
           <h3><span class="comp_name">[Company Name]</span> — Do Not Sell or Share My Personal Information</h3>
-          <p class="lead">California residents can use the contact details below to opt out of the sale or sharing of their personal information.</p>
-          <div class="preview-meta">
-            <div class="meta-block">
-              <div class="meta-label">Contact by email</div>
-              <div class="email_preview"><span class="empty">No email added yet</span></div>
-            </div>
-            <div class="meta-block">
-              <div class="meta-label">Contact by phone</div>
-              <div class="phone_preview"><span class="empty">No phone number added yet</span></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -635,16 +624,6 @@
 
     // Preview
     document.querySelectorAll(".comp_name").forEach(span => span.textContent = company);
-
-    const emailPreviewEl = document.querySelector(".email_preview");
-    emailPreviewEl.innerHTML = emails.length
-      ? joinWithOr(emails.map(e => `<a href="${e.includes("@") ? `mailto:${e}` : "#"}">${e}</a>`))
-      : `<span class="empty">No email added yet</span>`;
-
-    const phonePreviewEl = document.querySelector(".phone_preview");
-    phonePreviewEl.innerHTML = phones.length
-      ? joinWithOr(phones.map(p => `<a href="tel:${p.replace(/\D/g, "")}">${p}</a>`))
-      : `<span class="empty">No phone number added yet</span>`;
 
     // Code output
     let updatedContent = originalTemplate
