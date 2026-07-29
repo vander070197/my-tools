@@ -437,9 +437,7 @@
     font-style:italic;
   }
 
-  pre#outputCode,
-  pre#outputCodeHtml,
-  pre#outputCodeCss{
+  pre#outputCode{
     margin:0;
     padding:20px;
     background:#12151B;
@@ -456,6 +454,30 @@
 
   pre#outputCode .tag{color:#7CA8FF;}
   pre#outputCode .placeholder{color:#F2A65A;}
+
+  .code-editor{
+    display:block;
+    width:100%;
+    margin:0;
+    padding:20px;
+    background:#12151B;
+    color:#DDE3EA;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12.5px;
+    line-height:1.65;
+    white-space:pre;
+    border:none;
+    outline:none;
+    resize:vertical;
+    border-radius:0 0 var(--radius) var(--radius);
+    min-height:280px;
+    max-height:480px;
+    overflow:auto;
+  }
+
+  .code-editor:focus{
+    box-shadow:inset 0 0 0 2px var(--accent);
+  }
 </style>
 </head>
 <body>
@@ -571,7 +593,7 @@
           <h2>HTML</h2>
           <button class="btn btn-copy" id="copyHtmlBtn">Copy code</button>
         </div>
-        <pre id="outputCodeHtml"></pre>
+        <textarea id="outputCodeHtml" class="code-editor" spellcheck="false" aria-label="HTML editor"></textarea>
       </div>
 
       <div class="panel" id="cssContainer">
@@ -579,7 +601,7 @@
           <h2>CSS</h2>
           <button class="btn btn-copy" id="copyCssBtn">Copy code</button>
         </div>
-        <pre id="outputCodeCss"></pre>
+        <textarea id="outputCodeCss" class="code-editor" spellcheck="false" aria-label="CSS editor"></textarea>
       </div>
 
     </div>
@@ -593,7 +615,46 @@
   const outputCode = document.getElementById("outputCode");
 
   // ---------- Built-in Do Not Sell / Share template ----------
-  const originalTemplate = `<span class="dns"><a href="/COMPANY_NAME-do-not-sell-or-share-my-personal-information">Do Not Sell/Share My Personal Information</a></span>`;
+  const originalTemplate = `<!-- wp:html -->
+<p><span class="comp_name">[Company Name]</span> respects your privacy. We do not sell your personal information for money. Some limited information may be shared with service providers (such as analytics tools or advertising platforms), which may use it for analytics or cross-context behavioral advertising (for example, showing ads across different websites). California residents have the right to opt out of this sharing at any time.</p>
+ 
+<p>California law (the California Consumer Privacy Act and California Privacy Rights Act) gives California residents the right to opt out of the sale or sharing of their personal information. This page explains those rights and how you can exercise them.</p>
+ 
+<p><strong>Your Rights</strong></p>
+<p>If you are a California resident, you have the right to:</p>
+<ul class="bullet">
+    <li>Know whether your personal information is being sold or shared.</li>
+    <li>Opt out of the sale or sharing of your personal information at any time.</li>
+    <li>Request confirmation regarding how your data is collected, used, and whether it is sold or shared</li>
+</ul>
+ 
+<p>We will not discriminate against you for exercising these rights.</p>
+ 
+<p><strong>How We Use and Protect Information</strong></p>
+<p>We may share your information only in these limited circumstances:</p>
+<ul class="bullet">
+    <li>Service providers who support our business operations under confidentiality and security obligations.</li>
+    <li>Legal or regulatory requirements when required by law.</li>
+    <li>Business transfers if we are involved in a merger, acquisition, or sale of assets.</li>
+    <li>With your consent for any other specific purpose.</li>
+</ul>
+ 
+<p>We apply strict safeguards: credentials and files are stored only in approved systems, access is limited to authorized personnel, and access rights are removed when roles change.</p>
+<p>Some analytics and advertising platforms may use activity data to deliver targeted advertising across websites. California residents can opt out of this sharing.</p>
+ 
+<p><strong>How to Opt Out</strong></p>
+<p>While we do not sell personal information for money, you may submit a request to opt out of the sharing of your information for analytics or advertising purposes, or to ensure your preferences are recorded. Contact us:</p>
+
+<ul class="bullet">
+    <li>By email: <a href="mailto:value_here" class="email_val">[Client's Email Address]</a></li>
+    <li>By phone: <a href="tel:value_here" class="phone_val">[Client's Phone Number]</a></li>
+</ul>
+ 
+<p>Include your full name and the contact information you used with us (such as your email address).</p>
+ 
+<p><strong>Updates</strong></p>
+<p>If our practices change, we will update this page and provide notice before selling or sharing any personal information.</p>
+<!-- /wp:html -->`;
 
   // ---------- Generic tag-input controller ----------
   function createTagInput({ wrapId, inputId, validate }) {
@@ -788,14 +849,13 @@
     const headingText = `${company} — Do Not Sell or Share My Personal Information`;
     document.getElementById("slugOutput").value = generateSlug(headingText);
 
-    // Code output — kept in sync across the Home panel and the HTML tab
+    // Code output — this only drives the Home panel; the Code tab has its own independent state
     let updatedContent = originalTemplate
       .replace(/<span class="comp_name">.*?<\/span>/g, `<span class="comp_name">${company}</span>`)
       .replace(/<a[^>]*class="email_val"[^>]*>.*?<\/a>/g, emailLinks)
       .replace(/<a[^>]*class="phone_val"[^>]*>.*?<\/a>/g, phoneLinks);
 
     outputCode.textContent = updatedContent;
-    document.getElementById("outputCodeHtml").textContent = updatedContent;
   }
 
   companyInput.addEventListener("input", function () {
@@ -815,12 +875,52 @@
 
   updateTemplate();
 
-  // ---------- Companion CSS for the HTML/CSS tab ----------
+  // ---------- Code tab: independent starter content ----------
+  // Seeded once on load with a static, editable copy — never touched by Home's updateTemplate().
+  document.getElementById("outputCodeHtml").value = originalTemplate;
+
   const companionCSS = `/* Do Not Sell or Share notice — companion styles */
-.privacy_list h2 { font-weight:600; font-size:25px; line-height:100%; margin: 30px auto 20px; display: inline-block;}
-main a[href^="tel:"]:hover mark{text-decoration:underline;}
-.privacy_list h3{font-weight: 600; font-size: 20px;margin-bottom:15px;}`;
-  document.getElementById("outputCodeCss").textContent = companionCSS;
+.dns-notice {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1a1a1a;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.dns-notice p {
+  margin: 0 0 1em;
+}
+
+.dns-notice .comp_name {
+  font-weight: 600;
+}
+
+.dns-notice ul.bullet {
+  margin: 0 0 1em;
+  padding-left: 1.25em;
+}
+
+.dns-notice ul.bullet li {
+  margin-bottom: 0.4em;
+}
+
+.dns-notice a.email_val,
+.dns-notice a.phone_val {
+  color: #17594A;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.dns-notice a.email_val:hover,
+.dns-notice a.phone_val:hover {
+  color: #0F4238;
+}
+
+.dns-notice strong {
+  font-weight: 600;
+}`;
+  document.getElementById("outputCodeCss").value = companionCSS;
 
   // ---------- Sidenav tab switching ----------
   const navButtons = document.querySelectorAll(".nav-btn");
@@ -838,13 +938,13 @@ main a[href^="tel:"]:hover mark{text-decoration:underline;}
     });
   });
 
-  // ---------- Copy handlers for the HTML/CSS containers ----------
+  // ---------- Copy handlers for the HTML/CSS editors ----------
   document.getElementById("copyHtmlBtn").addEventListener("click", (e) => {
-    copyToClipboard(document.getElementById("outputCodeHtml").innerText.trim(), e.currentTarget);
+    copyToClipboard(document.getElementById("outputCodeHtml").value.trim(), e.currentTarget);
   });
 
   document.getElementById("copyCssBtn").addEventListener("click", (e) => {
-    copyToClipboard(document.getElementById("outputCodeCss").innerText.trim(), e.currentTarget);
+    copyToClipboard(document.getElementById("outputCodeCss").value.trim(), e.currentTarget);
   });
 </script>
 </body>
