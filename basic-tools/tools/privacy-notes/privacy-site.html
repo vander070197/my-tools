@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Do Not Sell Notice Generator123</title>
+<title>Do Not Sell Notice Generator</title>
 <link rel="icon" type="image/x-icon" href="https://i.imgur.com/Guq43Bd.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,11 +36,81 @@
     -webkit-font-smoothing:antialiased;
   }
 
+  .app{
+    display:flex;
+    min-height:100vh;
+  }
+
+  .sidenav{
+    flex:0 0 68px;
+    width:68px;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:20px 0;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+
+  .nav-btn{
+    width:42px;
+    height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    border-radius:9px;
+    background:transparent;
+    color:var(--ink-faint);
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+
+  .nav-btn svg{width:20px; height:20px;}
+
+  .nav-btn:hover{background:var(--surface-2); color:var(--ink);}
+
+  .nav-btn.active{
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+  }
+
+  .nav-btn .nav-label{
+    font-size:9.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+  }
+
+  .main-area{
+    flex:1 1 auto;
+    min-width:0;
+  }
+
   .shell{
     width:90%;
     max-width:none;
     margin:0 auto;
     padding:40px 28px 64px;
+  }
+
+  .code-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    align-items:start;
+  }
+
+  @media (max-width:800px){
+    .code-grid{grid-template-columns:1fr;}
+  }
+
+  .panel.highlight{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
   }
 
   header.page-head{
@@ -367,7 +437,9 @@
     font-style:italic;
   }
 
-  pre#outputCode{
+  pre#outputCode,
+  pre#outputCodeHtml,
+  pre#outputCodeCss{
     margin:0;
     padding:20px;
     background:#12151B;
@@ -387,7 +459,32 @@
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="app">
+
+  <nav class="sidenav" aria-label="Primary">
+    <button class="nav-btn active" data-view="home" title="Home" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11.5 12 4l9 7.5"/>
+        <path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/>
+      </svg>
+    </button>
+    <button class="nav-btn" data-view="html" title="HTML" aria-label="HTML">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="8 6 3 12 8 18"/>
+        <polyline points="16 6 21 12 16 18"/>
+      </svg>
+    </button>
+    <button class="nav-btn" data-view="css" title="CSS" aria-label="CSS">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 4C7 4 6 5 6 7v3c0 1-1 2-2 2 1 0 2 1 2 2v3c0 2 1 3 3 3"/>
+        <path d="M15 4c2 0 3 1 3 3v3c0 1 1 2 2 2-1 0-2 1-2 2v3c0 2-1 3-3 3"/>
+      </svg>
+    </button>
+  </nav>
+
+  <main class="main-area">
+
+  <div class="shell" id="view-home">
 
   <header class="page-head">
     <div>
@@ -461,7 +558,41 @@
 
     </div>
   </div>
-</div>
+  </div><!-- /view-home -->
+
+  <div class="shell" id="view-code" hidden>
+
+    <header class="page-head">
+      <div>
+        <span class="eyebrow">Embed Snippets</span>
+        <h1>HTML &amp; CSS</h1>
+        <p>Copy the generated markup and the companion stylesheet to embed this notice on your own site.</p>
+      </div>
+    </header>
+
+    <div class="code-grid">
+
+      <div class="panel" id="htmlContainer">
+        <div class="panel-head">
+          <h2>HTML</h2>
+          <button class="btn btn-copy" id="copyHtmlBtn">Copy code</button>
+        </div>
+        <pre id="outputCodeHtml"></pre>
+      </div>
+
+      <div class="panel" id="cssContainer">
+        <div class="panel-head">
+          <h2>CSS</h2>
+          <button class="btn btn-copy" id="copyCssBtn">Copy code</button>
+        </div>
+        <pre id="outputCodeCss"></pre>
+      </div>
+
+    </div>
+  </div><!-- /view-code -->
+
+  </main>
+</div><!-- /app -->
 
 <script>
   const companyInput = document.getElementById("companyInput");
@@ -664,12 +795,14 @@
 
   // ---------- Slug generator ----------
   // "/" -> "or", "&" -> "and", "#<n>" -> "number <n in words>",
+  // any other standalone number -> its word form,
   // lowercase, non-alphanumerics -> "-", collapse/trim hyphens.
   function generateSlug(text) {
     return text
       .replace(/#\s*(\d+)/g, (_, num) => ` number ${numberToWords(parseInt(num, 10))} `)
       .replace(/\//g, " or ")
       .replace(/&/g, " and ")
+      .replace(/\d+/g, (num) => ` ${numberToWords(parseInt(num, 10))} `)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/-+/g, "-")
@@ -700,13 +833,14 @@
     const headingText = `${company} — Do Not Sell or Share My Personal Information`;
     document.getElementById("slugOutput").value = generateSlug(headingText);
 
-    // Code output
+    // Code output — kept in sync across the Home panel and the HTML tab
     let updatedContent = originalTemplate
       .replace(/<span class="comp_name">.*?<\/span>/g, `<span class="comp_name">${company}</span>`)
       .replace(/<a[^>]*class="email_val"[^>]*>.*?<\/a>/g, emailLinks)
       .replace(/<a[^>]*class="phone_val"[^>]*>.*?<\/a>/g, phoneLinks);
 
     outputCode.textContent = updatedContent;
+    document.getElementById("outputCodeHtml").textContent = updatedContent;
   }
 
   companyInput.addEventListener("input", function () {
@@ -725,6 +859,86 @@
   });
 
   updateTemplate();
+
+  // ---------- Companion CSS for the HTML/CSS tab ----------
+  const companionCSS = `/* Do Not Sell or Share notice — companion styles */
+.dns-notice {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1a1a1a;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.dns-notice p {
+  margin: 0 0 1em;
+}
+
+.dns-notice .comp_name {
+  font-weight: 600;
+}
+
+.dns-notice ul.bullet {
+  margin: 0 0 1em;
+  padding-left: 1.25em;
+}
+
+.dns-notice ul.bullet li {
+  margin-bottom: 0.4em;
+}
+
+.dns-notice a.email_val,
+.dns-notice a.phone_val {
+  color: #17594A;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.dns-notice a.email_val:hover,
+.dns-notice a.phone_val:hover {
+  color: #0F4238;
+}
+
+.dns-notice strong {
+  font-weight: 600;
+}`;
+  document.getElementById("outputCodeCss").textContent = companionCSS;
+
+  // ---------- Sidenav tab switching ----------
+  const navButtons = document.querySelectorAll(".nav-btn");
+  const viewHome = document.getElementById("view-home");
+  const viewCode = document.getElementById("view-code");
+  const htmlContainer = document.getElementById("htmlContainer");
+  const cssContainer = document.getElementById("cssContainer");
+
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      navButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const view = btn.dataset.view;
+      if (view === "home") {
+        viewHome.hidden = false;
+        viewCode.hidden = true;
+        return;
+      }
+
+      viewHome.hidden = true;
+      viewCode.hidden = false;
+      htmlContainer.classList.toggle("highlight", view === "html");
+      cssContainer.classList.toggle("highlight", view === "css");
+      (view === "html" ? htmlContainer : cssContainer).scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  // ---------- Copy handlers for the HTML/CSS containers ----------
+  document.getElementById("copyHtmlBtn").addEventListener("click", (e) => {
+    copyToClipboard(document.getElementById("outputCodeHtml").innerText.trim(), e.currentTarget);
+  });
+
+  document.getElementById("copyCssBtn").addEventListener("click", (e) => {
+    copyToClipboard(document.getElementById("outputCodeCss").innerText.trim(), e.currentTarget);
+  });
 </script>
 </body>
 </html>
