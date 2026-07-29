@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Privacy Notice HTML Generator</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    #resultBox {
+        min-height: 300px;
+        white-space: pre-wrap;
+        background: #1e1e1e;
+        color: #fff;
+        padding: 15px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container py-4">
+    <h3 class="mb-3">Privacy Notice HTML Generator</h3>
+
+    <!-- FORM -->
+    <div class="card p-3 shadow-sm mb-4">
+        <div class="row g-3">
+
+            <!-- Date Select -->
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Select Date</label>
+                <input type="date" id="dateInput" class="form-control">
+                <small class="text-muted">Leave empty to use today's date</small>
+            </div>
+
+            <!-- Link Input -->
+            <div class="col-md-8">
+                <label class="form-label fw-bold">Do Not Sell/Share Link</label>
+                <input type="text" id="linkInput" class="form-control" placeholder="Enter link (https://...)">
+            </div>
+
+        </div>
+
+        <!-- BUTTONS (Generate removed) -->
+        <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-secondary" onclick="copyHTML()">Copy</button>
+            <button class="btn btn-danger" onclick="resetForm()">Reset</button>
+        </div>
+    </div>
+
+    <!-- RESULT BOX -->
+    <div class="card shadow-sm">
+        <div class="card-header fw-bold">Generated HTML</div>
+        <pre id="resultBox"></pre>
+    </div>
+</div>
+
+
+<script>
+// Format date: December 02, 2025
+function formatDate(dateObj) {
+    const options = { year: 'numeric', month: 'long', day: '2-digit' };
+    return dateObj.toLocaleDateString('en-US', options);
+}
+
+// MAIN RENDER FUNCTION (Live update)
+function renderHTML() {
+    const dateInput = document.getElementById("dateInput").value;
+    const linkInput = document.getElementById("linkInput").value.trim();
+
+    const finalDate = dateInput ? new Date(dateInput) : new Date();
+    const formattedDate = formatDate(finalDate);
+
+    const html = `
+<!-- wp:html -->
+<p>Last Updated: <span class="privacy_span">${formattedDate}</span></p>
+
+<p>This Privacy Notice explains how we collect, use, share, and protect your personal information when you visit our website, use our services, or interact with us. We are committed to protecting your privacy in accordance with applicable privacy laws and international privacy standards.</p>
+<p>By using this website or our services, you consent to the collection and use of your information as described in this Privacy Notice.</p>
+
+<ol type="1" class="privacy_list">
+    <li>
+        <h2>Information We Collect</h2> 
+        <p>We may collect different types of information depending on how you interact with our website and services:</p>
+
+        <h3>Personal Information</h3>
+        <ul class="bullet">
+            <li><b>Contact Details:</b> Name, email address, phone number, mailing address</li>
+            <li><b>Professional Information:</b> Job title, company name, business details</li>
+            <li><b>Application Information:</b> Resume, employment history, educational background, references (for job applications)</li>
+            <li><b>Service-Related Information:</b> Appointment details, preferences, service requirements</li>
+            <li><b>Communication Records:</b> Messages, inquiries, feedback, and correspondence with us</li>
+        </ul>
+
+        <h3>Technical Information</h3>
+        <ul class="bullet">
+            <li><b>Device Information:</b> IP address, browser type, operating system, device identifiers</li>
+            <li><b>Website Usage:</b> Pages visited, time spent on pages, links clicked, search terms used</li>
+            <li><b>Location Data:</b> General geographic location based on IP address</li>
+            <li><b>Cookies and Tracking Data:</b> Information collected through cookies, web beacons, and similar tracking technologies</li>
+        </ul>
+
+        <h3>Information You Provide</h3>
+        <ul class="bullet">
+            <li>Form submissions (contact forms, application forms, booking forms, and other online forms)</li>
+            <li>Newsletter subscriptions and marketing preferences</li>
+            <li>User-generated content (comments, reviews, testimonials)</li>
+            <li>Uploaded documents and files</li>
+        </ul>
+    </li> 
+    
+    <li>
+        <h2>How We Use Your Information</h2>
+        <h3>Legal Basis for Processing</h3>
+        <p>We process your personal information based on:</p>
+    
+        <ul class="bullet">
+            <li><b>Your consent</b> (for marketing, cookies, non-essential processing)</li>
+            <li><b>Contract performance</b> (to provide services you requested)</li>
+            <li><b>Legal obligations</b> (compliance with applicable laws)</li>
+            <li><b>Legitimate interests</b> (business operations, website improvement, fraud prevention)</li>
+        </ul>
+
+        <h3>Purposes of Processing</h3>
+        <p>We use your information to:</p>
+        <ul class="bullet">
+            <li><b>Respond to inquiries</b> and provide customer support</li>
+            <li><b>Deliver services</b> you have requested or purchased</li>
+            <li><b>Process applications</b> (job applications, service applications, registrations)</li>
+            <li><b>Schedule and manage appointments</b> or bookings</li>
+            <li><b>Send confirmations</b> and service-related communications</li>
+            <li><b>Improve our website</b> and user experience</li>
+            <li><b>Analyze website usage</b> and performance</li>
+            <li><b>Send marketing communications</b> (with your consent)</li>
+            <li><b>Comply with legal requirements</b> and resolve disputes</li>
+            <li><b>Prevent fraud</b> and ensure website security</li>
+            <li><b>Conduct business operations</b> and maintain records</li>
+        </ul>
+    </li>
+    
+    <li>
+        <h2>Cookies and Tracking Technologies</h2>
+        <p>We use cookies and similar technologies to enhance your website experience and analyze usage patterns.</p>
+        <h3>Types of Cookies We Use</h3>
+        <ul class="bullet">
+            <li><b>Essential Cookies:</b> Required for website functionality</li>
+            <li><b>Performance Cookies:</b> Help us understand how visitors use our website</li>
+            <li><b>Marketing Cookies:</b> Used to deliver relevant advertising and track campaign effectiveness</li>
+            <li><b>Preference Cookies:</b> Remember your choices and settings</li>
+        </ul>
+    </li>
+    
+    <h3>Third-Party Tools</h3>
+    <p>We may use third-party services that collect information through cookies and tracking technologies, including:</p>
+    <ul class="bullet">
+        <li><b>Google Analytics:</b> Website usage analysis and performance tracking</li>
+        <li><b>Facebook Pixel:</b> Social media advertising and audience insights</li>
+        <li><b>Marketing Platforms:</b> Email marketing, advertising networks, social media tools</li>
+        <li><b>Customer Support Tools:</b> Chat widgets, help desk systems</li>
+        <li><b>Website Optimization Tools:</b> Services that help improve website performance and user experience</li>
+    </ul>
+
+    <h3>Cookie Consent</h3>
+    <p>When you first visit our website, you can choose which cookies to accept. You can change your preferences at any time through your browser settings or our cookie preference center.</p>
+    <p>For California residents subject to CPRA, you may exercise your right to opt out of the “sale” or “sharing” of personal information by using the “<a href="${linkInput}" class="dns_link">Do Not Sell/Share My Personal Information</a>” link available on our website.</p>
+    
+	
+    <li>
+        <h2>Sharing Your Information</h2>
+        <p>We do not sell or rent your personal information. However, we may share your information in the following circumstances:</p>
+        <h3>Service Providers and Partners</h3>
+        <p>We may share information with trusted third parties who help us operate our business:</p>
+        <ul class="bullet">
+            <li>Website hosting and technical service providers</li>
+            <li>Payment processors (where applicable)</li>
+            <li>Marketing and advertising service providers</li>
+            <li>Customer support and communication tools</li>
+            <li>Analytics and performance monitoring services</li>
+            <li>Professional service providers (legal, accounting, consulting)</li>
+        </ul>
+
+        <h3>Legal Requirements</h3>
+        <p>We may disclose information when required by law or to:</p>
+        <ul class="bullet">
+            <li>Comply with legal processes, court orders, or government requests</li>
+            <li>Protect our rights, property, or safety, or that of others</li>
+            <li>Investigate or prevent illegal activities or policy violations</li>
+            <li>Respond to emergency situations</li>
+        </ul>
+
+        <h3>Business Transfers</h3>
+        <p>If we are involved in a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction.</p>
+    </li>
+
+    <li>
+        <h2>International Data Transfers</h2>
+        <p>Your information may be processed and stored in countries outside your own, including the Philippines and other countries where our service providers operate. These countries may have different data protection standards.</p>
+        <p>When we transfer information internationally, we implement safeguards such as encryption, access controls, and contractual protections with our service providers to ensure data is protected in line with applicable privacy laws.</p>
+    </li>
+
+    <li>
+        <h2>Data Security</h2>
+        <p>We implement appropriate technical and organizational measures to protect your personal information from unauthorized access, disclosure, alteration, or destruction.</p>
+        <h3>Security Measures Include:</h3>
+        <ul class="bullet">
+            <li>Secure data transmission (SSL/TLS encryption)</li>
+            <li>Access controls and authentication systems</li>
+            <li>Regular security assessments and updates</li>
+            <li>Staff training on data protection</li>
+            <li>Incident response procedures</li>
+        </ul>
+        <p><strong>Important:</strong> While we implement strong security measures, no internet transmission is completely secure. Please exercise caution when submitting personal information online.</p>
+    </li>
+
+    <li>
+        <h2>Sensitive Personal Information</h2>
+        <p>In some cases, we may collect sensitive personal information to fulfill specific services. This may include health-related data, such as allergies, symptoms, or other relevant medical information, when necessary to fulfill your request or provide specific services.</p>
+        <h3>Types of Sensitive Information We May Collect</h3>
+        <ul class="bullet">
+            <li>Health-related information (medical conditions, symptoms, allergies)</li>
+            <li>Dietary restrictions or accessibility requirements</li>
+            <li>Other sensitive information you voluntarily provide through specialized forms</li>
+        </ul>
+
+        <h3>Legal Basis and Protection</h3>
+        <p>Sensitive personal information is collected only when:</p>
+        <ul class="bullet">
+            <li>Necessary for the specific service you requested</li>
+            <li>With your explicit consent</li>
+            <li>In accordance with applicable data privacy laws</li>
+        </ul>
+
+        <h3>Special Handling</h3>
+        <p>Sensitive data is subject to enhanced security and confidentiality safeguards, including:</p>
+        <ul class="bullet">
+            <li>Additional access and security controls to protect confidentiality and integrity</li>
+            <li>Strictly limited access to authorized staff only</li>
+            <li>Storage and transmission using appropriate safeguards (e.g., secure protocols, restricted systems)</li>
+            <li>Processing in accordance with applicable privacy laws and regulations</li>
+            <li>Retained only as long as necessary for the specified purpose, consistent with our retention schedule and legal obligations.</li>
+        </ul>
+    </li>
+
+    <li>
+        <h2>Data Retention</h2>
+        <p>We retain personal information only as long as necessary for the purposes described in this Privacy Notice or as required by applicable law.</p>
+        <h3>Retention Periods</h3>
+        <p>We retain different types of information for different periods based on the purpose for which it was collected and applicable legal requirements. Generally:</p>
+        <ul class="bullet">
+            <li><b>Contact inquiries and communications:</b> Retained as long as necessary to respond to your inquiry and provide ongoing support</li>
+            <li><b>Service-related information:</b> Retained for the duration of our business relationship and as required by applicable laws</li>
+            <li><b>Marketing communications:</b> Retained until you opt out or withdraw consent, plus a brief period for processing</li>
+            <li><b>Website usage and analytics data:</b> Retained according to our analytics service providers' policies and industry standards</li>
+            <li><b>Legal and regulatory compliance:</b> Retained as required by applicable laws and regulations</li>
+        </ul>
+        <p>Specific retention periods may vary depending on the nature of our services, your relationship with us, and applicable legal requirements. When information is no longer needed, we securely delete, anonymize, or destroy it according to our data retention procedures.</p>
+    </li>
+
+    <li>
+        <h2>Your Rights</h2>
+        <p>Depending on your location and applicable law, you may have the following rights regarding your personal information:</p>
+        <h3>General Rights</h3>
+        <ul class="bullet">
+            <li><b>Access, Correction, and Deletion:</b> Request a copy of your personal information, correct inaccurate information, or request deletion (subject to legal exceptions)</li>
+            <li><b>Restriction:</b> Request that we limit how we use your information</li>
+            <li><b>Portability:</b> Request your information in a portable format</li>
+            <li><b>Objection:</b> Object to certain uses of your information</li>
+            <li><b>Withdraw Consent:</b> Withdraw previously given consent at any time</li>
+        </ul>
+
+        <h3>Marketing Communications</h3>
+        <p>You can opt out of marketing communications at any time by clicking the unsubscribe link in marketing emails, or you can contact us using the communication methods provided on the website where your data was collected.</p>
+
+        <h3>How to Exercise Your Rights</h3>
+        <p>To exercise these rights, please contact us using the communication method provided on the website where your data was collected. We will respond to your request within the timeframe required by applicable law.</p>
+    </li>
+
+    <li>
+        <h2>California Privacy Rights (CPRA)</h2>
+        <p>If you are a California resident, you have additional rights under the California Consumer Privacy Rights Act (CPRA), including the right to:</p>
+        <ul class="bullet">
+            <li><b>Know:</b> Request information about the categories and specific pieces of personal information we have collected about you</li>
+            <li><b>Delete:</b> Request deletion of your personal information, subject to legal exceptions</li>
+            <li><b>Correct:</b> Request correction of inaccurate personal information</li>
+            <li><b>Opt-Out:</b> Opt out of the "sale" or "sharing" of your personal information for cross-context behavioral advertising</li>
+        </ul>
+
+        <p>We do not sell or rent your personal information in exchange for money. However, we may share identifiers (such as IP addresses or cookies) with analytics and advertising partners, which may be considered "sharing" under CPRA.</p>
+        <p>To exercise your CPRA rights, including opting out of data sharing, please contact us using the “<a href="${linkInput}" class="dns_link">Do Not Sell/Share My Personal Information</a>” link available on our website. We will not discriminate against you for exercising your privacy rights.</p>
+    </li>
+
+    <li>
+        <h2>Children’s Privacy</h2>
+        <p>Our website and services are generally not intended for children under the age of 13, and we do not knowingly collect personal information from children under 13 without parental consent.</p>
+        <p>If our services are specifically designed for children or families (such as pediatric care, educational programs, or family services), we may process limited personal information from minors when necessary to fulfill specific service requests such as  appointment scheduling, enrollment, or consultations. In such cases, verifiable consent from a parent or legal guardian will be required, appropriate safeguards will be applied, and parents will be able to access or request deletion of their child’s information. These practices are carried out in compliance with applicable children’s privacy laws, including the U.S. Children’s Online Privacy Protection Act (COPPA).</p>
+        <p>For websites or services clearly intended for adults (18+ services), individuals under 18 should not submit personal information.</p>
+        <p>If we become aware that we have collected personal information from a child without required consent, we will take appropriate steps to delete the information promptly.</p>
+    </li>
+
+    <li>
+        <h2>Data Breach Notification</h2>
+        <p>In the event of a data breach that is likely to result in a risk to your rights and freedoms, we will:</p>
+        <ul class="bullet">
+            <li><b>Notify affected individuals</b> within the timeframe required by applicable law</li>
+            <li><b>Report to regulatory authorities</b> as required</li>
+            <li><b>Take immediate action</b> to contain the breach and prevent further unauthorized access</li>
+            <li><b>Provide information</b> about what happened, what information was involved, and what steps we are taking</li>
+        </ul>
+        <p>We are committed to transparency and will provide required notifications in line with applicable legal timelines</p>
+    </li>
+
+    <li>
+        <h2>Changes to This Privacy Notice</h2>
+        <p>We may update this Privacy Notice from time to time to reflect changes in our data processing practices, new legal requirements or regulatory guidance, technology updates or new services, and business operational changes.</p>
+        <p>When we make updates, we will post the revised Privacy Notice on this page and update the "Last Updated" at the top of the document.</p>
+        <p>For significant changes that affect your rights or how we handle your information, we will provide additional notice (such as by email or a website banner) and, where required by law, obtain your consent.</p>
+    </li>
+
+    <li>
+        <h2>Contact Us</h2>
+        <p>If you have any questions, concerns, or requests regarding this Privacy Notice or how your personal information is handled, please contact us using the communication method provided on the website where your data was collected.</p>
+    </li>
+</ol>
+<!-- /wp:html -->
+`;
+
+    document.getElementById("resultBox").textContent = html.trim();
+}
+
+// LIVE EVENT LISTENERS
+document.getElementById("dateInput").addEventListener("input", renderHTML);
+document.getElementById("linkInput").addEventListener("input", renderHTML);
+
+// COPY BUTTON
+function copyHTML() {
+    const text = document.getElementById("resultBox").textContent;
+    navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+}
+
+// RESET
+function resetForm() {
+    document.getElementById("dateInput").value = "";
+    document.getElementById("linkInput").value = "";
+    document.getElementById("resultBox").textContent = "";
+}
+</script>
+
+</body>
+</html>

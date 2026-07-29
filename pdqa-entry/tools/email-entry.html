@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Formatted Preview Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    #preview {
+      border: 1px solid #ced4da;
+      padding: 15px;
+      min-height: 150px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      font-family: 'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+      color: #333;
+      background-color: transparent;
+    }
+    #preview a {
+      text-decoration: none;
+      color: #3c8dbc;
+    }
+    mark {
+      background-color: #f1c40f !important;
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <h3 class="mb-3">Formatted Text Preview</h3>
+
+  <div class="mb-3">
+    <label for="inputText" class="form-label">Enter Your Text</label>
+    <textarea id="inputText" class="form-control" rows="8" placeholder="Paste your message here..."></textarea>
+  </div>
+
+  <div class="mb-3">
+    <button class="btn btn-primary" id="processBtn">Preview</button>
+    <button class="btn btn-secondary" id="copyBtn">Copy Preview</button>
+  </div>
+
+  <div>
+    <label class="form-label">Formatted Preview:</label>
+    <div id="preview" class="border rounded"></div>
+  </div>
+
+  <script>
+    // Existing arrays
+    const boldprase = [
+      "(Your Website is Live!)", "To:", "Cc:", "Agent to Queue:",
+      "Email Subject:", "Email Template Type:", "As of: "
+    ];
+    const highlightArray = [
+      "Your Website is Live!", "PDQA Signature", "WEBSITE UP AND RUNNING",
+      "Website Host", "Transfer Domain"
+    ];
+    const valueBold = ["Username:", "Password:"];
+    const privacyPolicyTriggers = [
+      "please see our Privacy Policy"
+    ];
+    const arrayVal = ["privacy@proweaver.com"];
+
+    // NEW: phrases you want to bold inline anywhere they appear
+    // Add or remove as needed (case-insensitive).
+    const specificBold = [
+      // Examples:
+      " Proweaver, Inc.",
+    ];
+
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function processText(input) {
+      const lines = input.split(/\r?\n/);
+      let boldNext = false;
+      let processed = [];
+
+      lines.forEach((line) => {
+        let original = line;
+        const trimmedLine = line.trim();
+        let shouldBoldLine = false;
+
+        // Replace "-------------------------" with <hr> (no <br> after)
+        if (/^-{5,}$/.test(trimmedLine)) {
+          processed.push("<hr>");
+          return;
+        }
+
+        if (boldNext) {
+          shouldBoldLine = true;
+          boldNext = false;
+        }
+
+        const signatureTriggers = ["PDQA Signature", "Your Website is Live!"];
+        if (signatureTriggers.some(trigger => trigger.toLowerCase() === trimmedLine.toLowerCase())) {
+          shouldBoldLine = true;
+          boldNext = true;
+        }
+
+        const allHeadings = [...boldprase, ...highlightArray].map(s => s.trim().toLowerCase());
+        const startsWithHeading = allHeadings.some(heading => {
+          const regex = new RegExp(`^${escapeRegex(heading)}`, 'i');
+          return regex.test(trimmedLine);
+        });
+        if (startsWithHeading) {
+          shouldBoldLine = true;
+        }
+
+        // Bold Username/Password (or other keys) values after the colon
+        valueBold.forEach(key => {
+          const escapedKey = escapeRegex(key.trim());
+          const regex = new RegExp(`^(${escapedKey})(\\s*)([^\\s].*)$`, 'i');
+          if (regex.test(original)) {
+            original = original.replace(regex, (_, k, space, val) => {
+              return `${k}${space}<strong>${val}</strong>`;
+            });
+          }
+        });
+
+        // Bold email addresses except those in arrayVal
+        const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+        original = original.replace(emailRegex, match => {
+          if (arrayVal.some(val => val.toLowerCase() === match.toLowerCase())) {
+            return match;
+          }
+          return `<strong>${match}</strong>`;
+        });
+
+        // Highlight phrases (avoid matches inside parentheses with lookarounds)
+        highlightArray.forEach(phrase => {
+          const escaped = escapeRegex(phrase);
+          const regex = new RegExp(`(?<!\\()(${escaped})(?!\\))`, 'gi');
+          original = original.replace(regex, match => `<mark style="background-color:#f1c40f">${match}</mark>`);
+        });
+
+        // Inline bold phrases: merge existing boldprase with new specificBold
+        const inlineBoldPhrases = [...boldprase, ...specificBold];
+        inlineBoldPhrases.forEach(phrase => {
+          const escaped = escapeRegex(phrase.trim());
+          if (!escaped) return;
+          const regex = new RegExp(escaped, 'gi');
+          original = original.replace(regex, match => `<strong>${match}</strong>`);
+        });
+
+        // Privacy Policy special handling
+        privacyPolicyTriggers.forEach(trigger => {
+          const regex = new RegExp(trigger, 'gi');
+          original = original.replace(regex, match =>
+            match.replace(/Privacy Policy/gi, `<a href="https://www.proweaver.com/privacy-policy" target="_blank">Privacy Policy</a>`)
+          );
+        });
+
+        // Wrap line in <strong> if flagged
+        if (shouldBoldLine) {
+          original = `<strong>${original}</strong>`;
+        }
+
+        // Wrap raw URLs in <a>
+        const urlRegex = /(?<!["'>])((https?:\/\/[^\s<>"']*?)(?=[.,!?)]?(?:\s|$)))/gi;
+        original = original.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+
+        // Remove nested <strong>
+        const container = document.createElement('div');
+        container.innerHTML = original;
+        function cleanNestedStrong(node) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.tagName === 'STRONG') {
+              const nested = node.querySelectorAll('strong');
+              nested.forEach(child => {
+                const parent = child.parentNode;
+                while (child.firstChild) {
+                  parent.insertBefore(child.firstChild, child);
+                }
+                parent.removeChild(child);
+              });
+            }
+            node.childNodes.forEach(cleanNestedStrong);
+          }
+        }
+        cleanNestedStrong(container);
+
+        processed.push(container.innerHTML);
+      });
+
+      // Join lines with <br>, but avoid adding <br> after <hr>
+      let finalOutput = '';
+      processed.forEach((line, idx) => {
+        finalOutput += line;
+        if (line !== '<hr>' && processed[idx + 1] !== '<hr>' && idx < processed.length - 1) {
+          finalOutput += '<br>';
+        }
+      });
+      return finalOutput;
+    }
+
+    document.getElementById('processBtn').addEventListener('click', () => {
+      const inputText = document.getElementById('inputText').value;
+      const result = processText(inputText);
+      document.getElementById('preview').innerHTML = result;
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const html = document.getElementById('preview').innerHTML;
+      const blob = new Blob([html], { type: "text/html" });
+      const data = [new ClipboardItem({ "text/html": blob })];
+      try {
+        await navigator.clipboard.write(data);
+        alert("Formatted preview copied!");
+      } catch (err) {
+        alert("Failed to copy: " + err);
+      }
+    });
+  </script>
+
+</body>
+</html>

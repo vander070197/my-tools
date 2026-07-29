@@ -1,0 +1,5 @@
+/* Privacy Policy */
+.privacy_span{ color: red; display: inline-block;}
+.privacy_list { padding-left: 20px; }
+.privacy_list li::marker { font: bold 20px/100% var(--primary-heading); }
+.privacy_list h2 { font: bold 20px/100% var(--primary-heading); margin: 30px auto 20px; }

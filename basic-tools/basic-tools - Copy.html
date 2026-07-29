@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Tools</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #e5e5e5;
+    }
+
+    .nav-link {
+      color: #bbb;
+      border-radius: 0;
+      text-align: left;
+    }
+
+    .nav-link.active {
+      background-color: #1f1f1f !important;
+      color: #fff !important;
+      border-left: 4px solid #4dabf7;
+    }
+
+    .vertical-tabs {
+      height: 100%;
+    }
+
+    iframe {
+      width: 100%;
+      height: 90vh;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .tab-container {
+      max-width: 95% !important;
+    }
+
+    .nav-tabs {
+      border-bottom: none !important;
+    }
+
+    .nav-link:hover {
+      background-color: #1c1c1c;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body class="py-4">
+
+<div class="container-fluid tab-container">
+  <div class="row">
+
+    <!-- LEFT SIDE VERTICAL TABS -->
+    <div class="col-md-3 col-lg-2">
+      <ul class="nav flex-column nav-tabs vertical-tabs" id="mainTabs" role="tablist">
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="dev-attendance-tab" data-bs-toggle="tab"
+            data-bs-target="#dev-attendance" type="button" role="tab">
+            <strong>PDQA Dev Attendance</strong>
+          </button>
+        </li>
+		
+		 <li class="nav-item" role="presentation">
+          <button class="nav-link" id="ot-time-calc-tab" data-bs-toggle="tab"
+            data-bs-target="#ot-time-calc" type="button" role="tab">
+            <strong>OT Time Calculator</strong>
+          </button>
+        </li>
+		
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="replace-data-tab" data-bs-toggle="tab"
+            data-bs-target="#replace-data" type="button" role="tab">
+            DB Replacement Data
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="profile-tab" data-bs-toggle="tab"
+            data-bs-target="#profile" type="button" role="tab">
+            Text to Link Converter
+          </button>
+        </li>
+		
+		<li class="nav-item" role="presentation">
+          <button class="nav-link" id="mc-calculator-tab" data-bs-toggle="tab"
+            data-bs-target="#bulk_link_copy" type="button" role="tab">
+            Bulk Link Copy Tool
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="mc-calculator-tab" data-bs-toggle="tab"
+            data-bs-target="#mc_calculator_tab" type="button" role="tab">
+            Clickable Link Generator
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="permalink-generator-tab" data-bs-toggle="tab"
+            data-bs-target="#permalink_generator_tab" type="button" role="tab">
+            Permalink Generator
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="css-code-tab" data-bs-toggle="tab"
+            data-bs-target="#css_code_tab" type="button" role="tab">
+            Basic Do Not Sell
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="bpn-tab" data-bs-toggle="tab"
+            data-bs-target="#bpn_tab" type="button" role="tab">
+            Basic Privacy Notice 
+          </button>
+        </li>
+
+         <li class="nav-item" role="presentation">
+          <button class="nav-link" id="epn-tab" data-bs-toggle="tab"
+            data-bs-target="#epn_tab" type="button" role="tab">
+            Ecom Privacy Notice 
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="sql-prefix-tab" data-bs-toggle="tab"
+            data-bs-target="#sql_prefix_tab" type="button" role="tab">
+            Dynamic SQL Prefix Generator
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="list-splitter-tab" data-bs-toggle="tab"
+            data-bs-target="#list_splitter_tab" type="button" role="tab">
+            List Splitter by Group Size
+          </button>
+        </li>
+
+         <li class="nav-item" role="presentation">
+          <button class="nav-link" id="list-remover-tab" data-bs-toggle="tab"
+            data-bs-target="#list_remover_tab" type="button" role="tab">
+            List Remover Tool
+          </button>
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- RIGHT SIDE TAB CONTENT -->
+    <div class="col-md-9 col-lg-10">
+      <div class="tab-content" id="mainTabsContent">
+
+		<!-- Dev Attendance List -->
+        <div class="tab-pane fade show active" id="dev-attendance" role="tabpanel">
+          <iframe src="tools/dev-attendance-list.html"></iframe>
+        </div>
+		
+		<!-- OT Time Calculator -->
+        <div class="tab-pane fade" id="ot-time-calc" role="tabpanel">
+          <iframe src="tools/daily-ot-calc.html"></iframe>
+        </div>
+		
+        <!-- DB Replacement Data -->
+        <div class="tab-pane fade" id="replace-data" role="tabpanel">
+          <iframe src="tools/pdqa-db-replace.html"></iframe>
+        </div>
+
+		<!-- Bulk Link Copy Tool -->
+		<div class="tab-pane fade" id="bulk_link_copy" role="tabpanel">
+		  <iframe src="tools/bulk-link-copy-tool.html"></iframe>
+		</div>
+		
+        <!-- Text to Link Converter -->
+        <div class="tab-pane fade" id="profile" role="tabpanel">
+          <iframe src="tools/text-link-active.html"></iframe>
+        </div>
+
+        <!-- Clickable Link Generator -->
+        <div class="tab-pane fade" id="mc_calculator_tab" role="tabpanel">
+          <iframe src="tools/active-links.html"></iframe>
+        </div>
+
+        <!-- Clickable Permalink Generator -->
+        <div class="tab-pane fade" id="permalink_generator_tab" role="tabpanel">
+          <iframe src="tools/permalink-generator.html"></iframe>
+        </div>
+
+        <!-- CSS Code -->
+        <div class="tab-pane fade" id="css_code_tab" role="tabpanel">
+          <iframe src="tools/privacy-notes/privacy-site.html"></iframe>
+        </div>
+
+         <!-- Privacy Notice Code -->
+        <div class="tab-pane fade" id="bpn_tab" role="tabpanel">
+          <iframe src="tools/basic-privacy-notice-tools.html"></iframe>
+        </div>
+
+         <!-- Privacy Notice Code -->
+        <div class="tab-pane fade" id="epn_tab" role="tabpanel">
+          <iframe src="tools/ecom-priv-notice.html"></iframe>
+        </div>
+
+        <!-- Dynamic SQL Prefix Generator -->
+        <div class="tab-pane fade" id="sql_prefix_tab" role="tabpanel">
+          <iframe src="tools/dynamic-sql-prefix-generator.html"></iframe>
+        </div>
+
+        <!-- List Splitter by Group Size -->
+        <div class="tab-pane fade" id="list_splitter_tab" role="tabpanel">
+          <iframe src="tools/list-group-splitter.html"></iframe>
+        </div>
+
+        <!-- List Remover Tool -->
+        <div class="tab-pane fade" id="list_remover_tab" role="tabpanel">
+          <iframe src="tools/list-remover-tool.html"></iframe>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

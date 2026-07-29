@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Privacy Template</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    code {
+      display: block;
+      white-space: pre-wrap;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+    }
+    .flex_input {display:flex; justify-content:space-between; gap:20px;}
+    .flex_input .mb-3 {width:100%;}
+    .for_previews { position: absolute; visibility: hidden; }
+  </style>
+</head>
+<body class="container py-4">
+
+  <h2 class="mb-3">Basic Template</h2>
+
+  <!-- Input area -->
+  <div class="mb-3">
+    <label for="companyInput" class="form-label">Enter Company Name:</label>
+    <input type="text" id="companyInput" class="form-control" placeholder="Type company name...">
+  </div>
+
+  <div class="flex_input">
+    <div class="mb-3">
+      <label for="emailInput" class="form-label">Enter Email Address(es):</label>
+      <textarea id="emailInput" class="form-control" placeholder="Enter multiple emails, separated by commas or new lines"></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="phoneInput" class="form-label">Enter Phone Number(s):</label>
+      <textarea id="phoneInput" class="form-control" placeholder="Enter multiple numbers, separated by commas or new lines"></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-outline-danger" id="resetBtn">Reset</button>
+
+  <!-- File upload -->
+  <div class="mb-3">
+    <label for="fileInput" class="form-label">Load Privacy Template (.txt):</label>
+    <div class="d-flex align-items-center">
+      <strong id="filePath" class="me-2">D:\Vander\1-----PDQA-FILES\sample-outputs\basic-tools\tools\privacy-notes\privacy-contents</strong>
+      <!-- Copy Path Button -->
+      <button class="btn btn-outline-secondary btn-sm" id="copyPathBtn" title="Copy Path">
+        <i class="bi bi-clipboard"></i>
+      </button>
+    </div>
+    <input type="file" id="fileInput" class="form-control mt-2" accept=".txt">
+  </div>
+
+  <!-- Live Preview -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">Live Preview</h5>
+    <button class="btn btn-sm btn-outline-primary" id="copyPageBtn">Copy Preview</button>
+  </div>
+  <div class="card p-3 mb-4 page_title_con">
+    <h2>Page Title</h2>
+    <p class="page_title_con">
+      <span class="comp_name">[Company Name]</span> - Do Not Sell or Share My Personal Information
+    </p>
+    <div class="for_previews"><strong>Emails:</strong> <span class="email_preview"></span></div>
+    <div class="for_previews"><strong>Phones:</strong> <span class="phone_preview"></span></div>
+  </div>
+
+  <!-- Code Example -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">Generated Code</h5>
+    <button class="btn btn-sm btn-outline-primary" id="copyCodeBtn">Copy Code</button>
+  </div>
+  <code id="outputCode">Upload a template file...</code>
+
+  <script>
+    const companyInput = document.getElementById("companyInput");
+    const emailInput = document.getElementById("emailInput");
+    const phoneInput = document.getElementById("phoneInput");
+    const outputCode = document.getElementById("outputCode");
+    const fileInput = document.getElementById("fileInput");
+    const filePath = document.getElementById("filePath").textContent;
+
+    let originalTemplate = "";
+
+    // ✅ Copy helper
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("Copied to clipboard!");
+        }).catch(err => {
+          console.error("Clipboard error:", err);
+        });
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        alert("Copied to clipboard!");
+      }
+    }
+
+    // ✅ Copy buttons
+    document.getElementById("copyPathBtn").addEventListener("click", () => {
+      copyToClipboard(filePath);
+    });
+
+    document.getElementById("copyPageBtn").addEventListener("click", () => {
+      const textToCopy = document.querySelector(".page_title_con p").innerText.trim();
+      copyToClipboard(textToCopy);
+    });
+
+    document.getElementById("copyCodeBtn").addEventListener("click", () => {
+      const textToCopy = outputCode.innerText.trim();
+      copyToClipboard(textToCopy);
+    });
+
+    // Load file when user selects one
+    fileInput.addEventListener("change", function () {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        originalTemplate = e.target.result;
+        outputCode.textContent = originalTemplate;
+        updateTemplate(); // refresh with inputs
+      };
+      reader.readAsText(file);
+    });
+
+    // Common update function (Company, Emails, Phones)
+    function updateTemplate() {
+      if (!originalTemplate) return;
+
+      const company = companyInput.value.trim() || "[Company Name]";
+      const emails = emailInput.value.split(/[\n,]+/).map(e => e.trim()).filter(e => e);
+      const phones = phoneInput.value.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
+
+      // ✅ Wrap emails in <a>
+      const emailLinks = emails.map(email => {
+        return `<a class="email_val" href="${email.includes("@") ? `mailto:${email}` : "#"}">${email}</a>`;
+      }).join(", ") || `<a class="email_val" href="#">[Client’s Email Address]</a>`;
+
+      // ✅ Wrap phones in <a>
+      const phoneLinks = phones.map(phone => {
+        const telValue = phone.replace(/\D/g, "");
+        return `<a class="phone_val" href="${telValue ? `tel:${telValue}` : "#"}">${phone}</a>`;
+      }).join(", ") || `<a class="phone_val" href="#">[Client’s Phone Number]</a>`;
+
+      // ✅ Update Preview
+      document.querySelectorAll(".comp_name").forEach(span => span.textContent = company);
+      document.querySelector(".email_preview").innerHTML = emailLinks;
+      document.querySelector(".phone_preview").innerHTML = phoneLinks;
+
+      // ✅ Update Code (replace placeholders with generated content)
+      let updatedContent = originalTemplate
+        .replace(/<span class="comp_name">.*?<\/span>/g, `<span class="comp_name">${company}</span>`)
+        .replace(/<a[^>]*class="email_val"[^>]*>.*?<\/a>/g, emailLinks)
+        .replace(/<a[^>]*class="phone_val"[^>]*>.*?<\/a>/g, phoneLinks);
+
+      outputCode.textContent = updatedContent;
+    }
+
+    // Attach input listeners
+    companyInput.addEventListener("input", updateTemplate);
+    emailInput.addEventListener("input", updateTemplate);
+    phoneInput.addEventListener("input", updateTemplate);
+
+    // ✅ Only trim company input
+    companyInput.addEventListener("input", function () {
+      this.value = this.value.replace(/^\s+/, ""); // prevent leading space
+    });
+    companyInput.addEventListener("blur", function () {
+      this.value = this.value.trim();
+    });
+
+    // Reset button logic
+    document.getElementById("resetBtn").addEventListener("click", function () {
+      companyInput.value = "";
+      emailInput.value = "";
+      phoneInput.value = "";
+
+      document.querySelectorAll(".comp_name").forEach(span => span.textContent = "[Company Name]");
+      document.querySelector(".email_preview").innerHTML = `<a class="email_val" href="#">[Client’s Email Address]</a>`;
+      document.querySelector(".phone_preview").innerHTML = `<a class="phone_val" href="#">[Client’s Phone Number]</a>`;
+
+      outputCode.textContent = "Upload a template file...";
+      originalTemplate = "";
+    });
+  </script>
+</body>
+</html>

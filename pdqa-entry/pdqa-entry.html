@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Entry Management</title>
+
+  <link href="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css)" rel="stylesheet">
+  <link href="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css)" rel="stylesheet">
+
+  <style>
+    /* ========== THEME SYSTEM ========== */
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --transition-fast: 150ms ease;
+      --transition-normal: 250ms ease;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --accent-color: #60a5fa;
+      --accent-hover: #3b82f6;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ========== BASE STYLES ========== */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      transition: background var(--transition-normal), color var(--transition-normal);
+      margin: 0;
+    }
+
+    /* ========== LAYOUT ========== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ========== SIDEBAR ========== */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+      transition: transform var(--transition-normal), background var(--transition-normal);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      list-style: none;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      border-radius: 10px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--accent-color);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .nav-link i {
+      font-size: 1.25rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: auto;
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ========== HEADER ========== */
+    .top-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-primary);
+      border-color: var(--accent-color);
+    }
+
+    .theme-toggle i {
+      font-size: 1.25rem;
+    }
+
+    /* ========== CONTENT AREA ========== */
+    .content-area {
+      flex: 1;
+      padding: 2rem;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn var(--transition-normal);
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .panel-description {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* ========== IFRAME CONTAINER ========== */
+    .iframe-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .iframe-wrapper iframe {
+      width: 100%;
+      height: calc(100vh - 220px);
+      min-height: 500px;
+      border: none;
+      display: block;
+      background: var(--bg-card);
+    }
+
+    .iframe-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      z-index: 10;
+      transition: opacity var(--transition-normal);
+    }
+
+    .iframe-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========== MOBILE MENU ========== */
+    .mobile-menu-btn {
+      display: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 90;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .mobile-menu-btn {
+        display: flex;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .content-area {
+        padding: 1rem;
+      }
+
+      .top-header {
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 1.25rem;
+      }
+
+      .iframe-wrapper iframe {
+        height: calc(100vh - 200px);
+        min-height: 400px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <div class="sidebar-logo" aria-hidden="true">D</div>
+        <h1 class="sidebar-title">Dashboard</h1>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul class="nav flex-column" role="tablist" aria-label="Entry sections">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" 
+                    id="task-tab" 
+                    data-target="task-panel"
+                    data-iframe="tools/task-url-orch-entry.html"
+                    role="tab" 
+                    aria-selected="true"
+                    aria-controls="task-panel">
+              <i class="bi bi-list-task" aria-hidden="true"></i>
+              <span>Task & URL</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="backup-tab" 
+                    data-target="backup-panel"
+                    data-iframe="tools/back-up-orch-entry.html"
+                    role="tab" 
+                    aria-selected="false"
+                    aria-controls="backup-panel">
+              <i class="bi bi-cloud-upload" aria-hidden="true"></i>
+              <span>Back-up Entry</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="notes-tab" 
+                    data-target="notes-panel"
+                    data-iframe="tools/email-entry.html"
+                    role="tab" 
+                    aria-selected="false"
+                    aria-controls="notes-panel">
+              <i class="bi bi-envelope" aria-hidden="true"></i>
+              <span>Additional Notes</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" 
+                    id="other-tab" 
+                    data-target="other-panel"
+                    data-iframe="tools/meetings-other-team-check.html"
+                    role="tab" 
+                    aria-selected="false"
+                    aria-controls="other-panel">
+              <i class="bi bi-people" aria-hidden="true"></i>
+              <span>Meetings & Team</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-link" id="footerThemeToggle" aria-label="Toggle theme">
+          <i class="bi bi-moon" aria-hidden="true"></i>
+          <span>Dark Mode</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="d-flex align-items-center gap-3">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false">
+            <i class="bi bi-list" aria-hidden="true"></i>
+          </button>
+          <h2 class="page-title" id="pageTitle">
+            <i class="bi bi-list-task" aria-hidden="true"></i>
+            Task & URL Entry
+          </h2>
+        </div>
+        <div class="header-actions">
+          <button class="theme-toggle" id="headerThemeToggle" aria-label="Toggle dark mode">
+            <i class="bi bi-moon" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- Task & URL Panel -->
+        <section class="tab-panel active" id="task-panel" role="tabpanel" aria-labelledby="task-tab">
+          <div class="panel-header">
+            <h3 class="panel-title">Task & URL Entry</h3>
+            <p class="panel-description">Manage your tasks and orchestration URLs</p>
+          </div>
+          <div class="iframe-wrapper">
+            <div class="iframe-loading" aria-label="Loading content">
+              <div class="spinner"></div>
+            </div>
+            <iframe src="tools/task-url-orch-entry.html" 
+                    title="Task and URL entry form"
+                    loading="lazy"></iframe>
+          </div>
+        </section>
+
+        <!-- Backup Panel -->
+        <section class="tab-panel" id="backup-panel" role="tabpanel" aria-labelledby="backup-tab">
+          <div class="panel-header">
+            <h3 class="panel-title">Back-up Entry</h3>
+            <p class="panel-description">Configure and manage backup entries</p>
+          </div>
+          <div class="iframe-wrapper">
+            <div class="iframe-loading" aria-label="Loading content">
+              <div class="spinner"></div>
+            </div>
+            <iframe data-src="tools/back-up-orch-entry.html" 
+                    title="Backup entry form"
+                    loading="lazy"></iframe>
+          </div>
+        </section>
+
+        <!-- Notes Panel -->
+        <section class="tab-panel" id="notes-panel" role="tabpanel" aria-labelledby="notes-tab">
+          <div class="panel-header">
+            <h3 class="panel-title">Additional Notes</h3>
+            <p class="panel-description">Email and note management</p>
+          </div>
+          <div class="iframe-wrapper">
+            <div class="iframe-loading" aria-label="Loading content">
+              <div class="spinner"></div>
+            </div>
+            <iframe data-src="tools/email-entry.html" 
+                    title="Email entry form"
+                    loading="lazy"></iframe>
+          </div>
+        </section>
+
+        <!-- Other Panel -->
+        <section class="tab-panel" id="other-panel" role="tabpanel" aria-labelledby="other-tab">
+          <div class="panel-header">
+            <h3 class="panel-title">Meetings & Team Checks</h3>
+            <p class="panel-description">Schedule meetings and team coordination</p>
+          </div>
+          <div class="iframe-wrapper">
+            <div class="iframe-loading" aria-label="Loading content">
+              <div class="spinner"></div>
+            </div>
+            <iframe data-src="tools/meetings-other-team-check.html" 
+                    title="Meetings and team check form"
+                    loading="lazy"></iframe>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * Dashboard Controller
+     * Handles navigation, theming, and iframe management
+     */
+    (function() {
+      'use strict';
+
+      // ========== DOM ELEMENTS ==========
+      const elements = {
+        html: document.documentElement,
+        sidebar: document.getElementById('sidebar'),
+        sidebarOverlay: document.getElementById('sidebarOverlay'),
+        mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+        headerThemeToggle: document.getElementById('headerThemeToggle'),
+        footerThemeToggle: document.getElementById('footerThemeToggle'),
+        pageTitle: document.getElementById('pageTitle'),
+        navLinks: document.querySelectorAll('.sidebar-nav .nav-link'),
+        tabPanels: document.querySelectorAll('.tab-panel')
+      };
+
+      // ========== STATE ==========
+      const THEME_KEY = 'dashboard-theme';
+      const ACTIVE_TAB_KEY = 'dashboard-active-tab';
+
+      // ========== THEME MANAGEMENT ==========
+      const ThemeManager = {
+        init() {
+          const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+          this.setTheme(savedTheme);
+        },
+
+        toggle() {
+          const currentTheme = elements.html.dataset.theme;
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          this.setTheme(newTheme);
+        },
+
+        setTheme(theme) {
+          elements.html.dataset.theme = theme;
+          localStorage.setItem(THEME_KEY, theme);
+          this.updateIcons(theme);
+        },
+
+        updateIcons(theme) {
+          const iconClass = theme === 'dark' ? 'bi-sun' : 'bi-moon';
+          const labelText = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+
+          // Update header toggle
+          const headerIcon = elements.headerThemeToggle.querySelector('i');
+          headerIcon.className = `bi ${iconClass}`;
+
+          // Update footer toggle
+          const footerIcon = elements.footerThemeToggle.querySelector('i');
+          const footerText = elements.footerThemeToggle.querySelector('span');
+          footerIcon.className = `bi ${iconClass}`;
+          footerText.textContent = labelText;
+        }
+      };
+
+      // ========== NAVIGATION MANAGEMENT ==========
+      const NavigationManager = {
+        init() {
+          const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+          if (savedTab) {
+            const targetLink = document.querySelector(`[data-target="${savedTab}"]`);
+            if (targetLink) {
+              this.activateTab(targetLink);
+            }
+          }
+        },
+
+        activateTab(link) {
+          const targetId = link.dataset.target;
+          const targetPanel = document.getElementById(targetId);
+
+          if (!targetPanel) return;
+
+          // Update navigation links
+          elements.navLinks.forEach(navLink => {
+            navLink.classList.remove('active');
+            navLink.setAttribute('aria-selected', 'false');
+          });
+          link.classList.add('active');
+          link.setAttribute('aria-selected', 'true');
+
+          // Update panels
+          elements.tabPanels.forEach(panel => {
+            panel.classList.remove('active');
+          });
+          targetPanel.classList.add('active');
+
+          // Update page title
+          const icon = link.querySelector('i').className;
+          const text = link.querySelector('span').textContent;
+          elements.pageTitle.innerHTML = `<i class="${icon}" aria-hidden="true"></i> ${text}`;
+
+          // Lazy load iframe
+          IframeManager.loadIframe(targetPanel);
+
+          // Save state
+          localStorage.setItem(ACTIVE_TAB_KEY, targetId);
+
+          // Close mobile menu
+          MobileMenuManager.close();
+        }
+      };
+
+      // ========== IFRAME MANAGEMENT ==========
+      const IframeManager = {
+        loadIframe(panel) {
+          const iframe = panel.querySelector('iframe');
+          const loader = panel.querySelector('.iframe-loading');
+
+          if (!iframe) return;
+
+          // Check if iframe needs to be loaded
+          if (iframe.dataset.src && !iframe.src) {
+            iframe.src = iframe.dataset.src;
+          }
+
+          // Handle loading state
+          if (loader) {
+            iframe.addEventListener('load', () => {
+              loader.classList.add('hidden');
+            }, { once: true });
+          }
+        },
+
+        initFirstPanel() {
+          const firstPanel = document.querySelector('.tab-panel.active');
+          if (firstPanel) {
+            const loader = firstPanel.querySelector('.iframe-loading');
+            const iframe = firstPanel.querySelector('iframe');
+
+            if (iframe && loader) {
+              iframe.addEventListener('load', () => {
+                loader.classList.add('hidden');
+              }, { once: true });
+            }
+          }
+        }
+      };
+
+      // ========== MOBILE MENU MANAGEMENT ==========
+      const MobileMenuManager = {
+        toggle() {
+          const isOpen = elements.sidebar.classList.toggle('open');
+          elements.sidebarOverlay.classList.toggle('open', isOpen);
+          elements.mobileMenuBtn.setAttribute('aria-expanded', isOpen);
+        },
+
+        close() {
+          elements.sidebar.classList.remove('open');
+          elements.sidebarOverlay.classList.remove('open');
+          elements.mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        }
+      };
+
+      // ========== EVENT LISTENERS ==========
+      function initEventListeners() {
+        // Theme toggles
+        elements.headerThemeToggle.addEventListener('click', () => ThemeManager.toggle());
+        elements.footerThemeToggle.addEventListener('click', () => ThemeManager.toggle());
+
+        // Navigation
+        elements.navLinks.forEach(link => {
+          link.addEventListener('click', () => NavigationManager.activateTab(link));
+        });
+
+        // Mobile menu
+        elements.mobileMenuBtn.addEventListener('click', () => MobileMenuManager.toggle());
+        elements.sidebarOverlay.addEventListener('click', () => MobileMenuManager.close());
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            MobileMenuManager.close();
+          }
+        });
+      }
+
+      // ========== INITIALIZATION ==========
+      function init() {
+        ThemeManager.init();
+        NavigationManager.init();
+        IframeManager.initFirstPanel();
+        initEventListeners();
+      }
+
+      // Run on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foldback — CSS Line Folder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<link rel="icon" type="image/x-icon" href="https://i.imgur.com/i5JsYMO.png">
+
+<style>
+  :root{
+    --bg: #0b0d10;
+    --panel: #14171b;
+    --panel-2: #191d22;
+    --border: #262b31;
+    --text: #d8dee4;
+    --text-dim: #767f8a;
+    --accent: #ffa657;
+    --accent-2: #58c4ff;
+    --accent-3: #a78bfa;   /* comments (violet) */
+    --good: #56d364;
+    --mono: 'JetBrains Mono','Fira Code',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 12% -10%, rgba(255,166,87,0.07), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(88,196,255,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family: var(--mono);
+    padding: 32px 20px 60px;
+  }
+
+  .wrap{ max-width: 1040px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  .head{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:16px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brace-mark{
+    font-size:30px; font-weight:700; color:var(--accent);
+    letter-spacing:-2px; line-height:1; user-select:none;
+  }
+  .title h1{ margin:0; font-size:19px; font-weight:600; color:#fff; letter-spacing:0.2px; }
+  .title p{ margin:3px 0 0; font-size:12px; color:var(--text-dim); }
+  .badge{
+    font-size:11px; color:var(--text-dim); border:1px solid var(--border);
+    border-radius:20px; padding:5px 12px; background:var(--panel);
+  }
+  .badge b{ color:var(--text); }
+
+  /* ---------- toolbar ---------- */
+  .toolbar{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:10px 12px; margin-bottom:14px; flex-wrap:wrap;
+  }
+
+  /* fold/unfold switch */
+  .switch{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel-2); border:1px solid var(--border);
+    border-radius:10px; padding:4px; position:relative; user-select:none;
+  }
+  .switch .opt{
+    position:relative; z-index:2; display:flex; align-items:center; gap:7px;
+    padding:8px 14px; border-radius:8px; font-size:12.5px; font-weight:600;
+    cursor:pointer; color:var(--text-dim); transition:color .25s ease; white-space:nowrap;
+  }
+  .switch .opt.active{ color:#0b0d10; }
+  .switch .thumb{
+    position:absolute; top:4px; bottom:4px; left:4px;
+    width:calc(50% - 4px); border-radius:8px; background:var(--accent);
+    transition:transform .28s cubic-bezier(.65,0,.35,1), background .28s ease; z-index:1;
+  }
+  .switch.is-unfold .thumb{ transform:translateX(100%); background:var(--accent-2); }
+  .opt svg{ width:14px; height:14px; flex-shrink:0; }
+
+  /* divider between switch groups */
+  .toolbar-sep{
+    width:1px; height:32px; background:var(--border); flex-shrink:0; margin:0 2px;
+  }
+
+  /* comments toggle — pill style, 3-state visual: auto / keep / strip */
+  .comments-wrap{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--border);
+    border-radius:10px; padding:4px; position:relative; user-select:none;
+  }
+  .comments-wrap .c-opt{
+    position:relative; z-index:2; display:flex; align-items:center; gap:6px;
+    padding:8px 13px; border-radius:8px; font-size:12px; font-weight:600;
+    cursor:pointer; color:var(--text-dim); transition:color .22s ease; white-space:nowrap;
+  }
+  .comments-wrap .c-opt.active{ color:#0b0d10; }
+  .comments-wrap .c-thumb{
+    position:absolute; top:4px; bottom:4px; left:4px;
+    border-radius:8px; background:var(--accent-3);
+    transition:transform .28s cubic-bezier(.65,0,.35,1), width .28s ease; z-index:1;
+  }
+  /* "keep" = left position, "strip" = right position */
+  .comments-wrap[data-cmode="keep"] .c-thumb{
+    transform:translateX(0);
+  }
+  .comments-wrap[data-cmode="strip"] .c-thumb{
+    transform:translateX(100%);
+  }
+  /* thumb width matches the individual option width — set via JS */
+  .c-opt svg{ width:13px; height:13px; flex-shrink:0; }
+
+  .spacer{ flex:1; }
+
+  .icon-btn{
+    display:flex; align-items:center; gap:7px;
+    background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text); font-family:var(--mono); font-size:12px; font-weight:600;
+    border-radius:9px; padding:9px 13px; cursor:pointer;
+    transition:border-color .18s ease, transform .12s ease, background .18s ease;
+  }
+  .icon-btn:hover{ border-color:#3a4047; background:#1d2228; }
+  .icon-btn:active{ transform:scale(.96); }
+  .icon-btn svg{ width:14px; height:14px; }
+  .icon-btn.primary{ background:var(--accent); color:#1a1206; border-color:transparent; }
+  .icon-btn.primary:hover{ background:#ffb16e; }
+  .icon-btn.copied{ background:var(--good); color:#0b1c0e; border-color:transparent; }
+
+  /* hint strip shown when fold+strip are both active */
+  .hint-bar{
+    display:none; align-items:center; gap:10px;
+    background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.22);
+    border-radius:9px; padding:8px 14px; margin-bottom:14px;
+    font-size:11.5px; color:rgba(167,139,250,0.85);
+  }
+  .hint-bar.visible{ display:flex; }
+  .hint-bar svg{ width:13px; height:13px; flex-shrink:0; opacity:.7; }
+
+  /* ---------- editor panel ---------- */
+  .panel{
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .panel-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 14px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#15191e,#131619);
+  }
+  .dots{ display:flex; gap:6px; }
+  .dots span{ width:9px; height:9px; border-radius:50%; background:#2a2f35; display:block; }
+  .filename{ font-size:11.5px; color:var(--text-dim); }
+  .filename b{ color:var(--text); font-weight:600; }
+
+  textarea{
+    display:block; width:100%; min-height:420px;
+    background:transparent; border:none; outline:none; resize:vertical;
+    color:var(--text); font-family:var(--mono); font-size:13.5px; line-height:1.65;
+    padding:18px 20px; tab-size:2;
+  }
+  textarea::placeholder{ color:#4b525a; }
+  textarea::selection{ background:rgba(255,166,87,0.25); }
+
+  .footline{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 4px 0; font-size:11px; color:var(--text-dim);
+  }
+  .footline a{ color:var(--text-dim); text-decoration:none; border-bottom:1px dotted var(--border); }
+  .footline a:hover{ color:var(--accent); }
+
+  @media (max-width: 640px){
+    .head{ align-items:flex-start; }
+    .toolbar{ justify-content:stretch; }
+    .switch, .comments-wrap{ width:100%; justify-content:space-between; }
+    .toolbar-sep{ display:none; }
+    textarea{ min-height:320px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="head">
+    <div class="brand">
+      <div class="brace-mark">{ }</div>
+      <div class="title">
+        <h1>Foldback</h1>
+        <p>Fold CSS rules onto one line, or unfold them back — media queries keep their wrapper.</p>
+      </div>
+    </div>
+    <div class="badge">media-aware <b>@media</b> handling</div>
+  </div>
+
+  <div class="toolbar">
+    <!-- Fold / Unfold -->
+    <div class="switch" id="modeSwitch">
+      <div class="thumb"></div>
+      <div class="opt active" data-mode="fold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4 L7 20 M17 4 L17 20 M4 12 L20 12"/></svg>
+        Fold
+      </div>
+      <div class="opt" data-mode="unfold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7 L20 7 M4 12 L20 12 M4 17 L20 17"/></svg>
+        Unfold
+      </div>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Keep / Strip comments -->
+    <div class="comments-wrap" id="commentSwitch" data-cmode="keep">
+      <div class="c-thumb" id="cThumb"></div>
+      <div class="c-opt active" data-cmode="keep" id="cOptKeep">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Keep Comments
+      </div>
+      <div class="c-opt" data-cmode="strip" id="cOptStrip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Strip Comments
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button class="icon-btn" id="sampleBtn" title="Load a sample stylesheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      Sample
+    </button>
+    <button class="icon-btn" id="clearBtn" title="Clear the editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      Clear
+    </button>
+    <button class="icon-btn primary" id="copyBtn" title="Copy output to clipboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      <span id="copyLabel">Copy</span>
+    </button>
+  </div>
+
+  <!-- hint when fold + strip -->
+  <div class="hint-bar" id="hintBar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Fold mode — all <code style="background:rgba(167,139,250,0.12);padding:1px 5px;border-radius:4px;">/* comments */</code> will be stripped from the output for a clean single-line result.</span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-bar">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="filename"><b>styles.css</b> — edit freely, then flip Fold / Unfold</div>
+      <div style="width:48px"></div>
+    </div>
+    <textarea id="cssArea" spellcheck="false" placeholder=".svc-link {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--secColor);
+  text-decoration: none;
+}
+
+@media (max-width: 800px) {
+  .svc-card {
+    width: 100%;
+    max-width: 326px;
+  }
+}"></textarea>
+  </div>
+
+  <div class="footline">
+    <span>Parses real CSS — works on whatever formatting you paste in.</span>
+    <span>built with jQuery</span>
+  </div>
+
+</div>
+
+<script>
+$(function(){
+
+  /* ============================================================
+     COMMENT HANDLING
+     ============================================================ */
+
+  /**
+   * Extract all block comments from CSS, preserving their positions
+   * relative to rule blocks for re-insertion in unfold mode.
+   * Returns { stripped: string, comments: [{placeholder, text}] }
+   */
+  function extractComments(css){
+    const comments = [];
+    let idx = 0;
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, function(match){
+      const ph = `/*__COMMENT_${idx}__*/`;
+      comments.push({ placeholder: ph, text: match });
+      idx++;
+      return ph;
+    });
+    return { stripped, comments };
+  }
+
+  function stripComments(css){
+    // Remove block comments and clean up any resulting blank lines
+    return css
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  function restoreComments(output, comments){
+    let result = output;
+    comments.forEach(({ placeholder, text }) => {
+      result = result.replace(placeholder, text);
+    });
+    return result;
+  }
+
+  /* ============================================================
+     CSS PARSER
+     ============================================================ */
+
+  function parseCSS(css){
+    const nodes = [];
+    let i = 0;
+    const len = css.length;
+
+    while (i < len){
+      while (i < len && /\s/.test(css[i])) i++;
+      if (i >= len) break;
+
+      // capture standalone comments before the next rule
+      if (css.slice(i, i+2) === '/*'){
+        const end = css.indexOf('*/', i);
+        if (end === -1) break;
+        const commentText = css.slice(i, end + 2);
+        nodes.push({ type: 'comment', text: commentText });
+        i = end + 2;
+        continue;
+      }
+
+      const start = i;
+      let depth = 0;
+      while (i < len && css[i] !== '{') i++;
+      if (i >= len) break;
+
+      const header = css.slice(start, i).trim();
+      i++; // consume '{'
+      const bodyStart = i;
+      depth = 1;
+      while (i < len && depth > 0){
+        if (css[i] === '{') depth++;
+        else if (css[i] === '}') depth--;
+        if (depth > 0) i++;
+      }
+      const body = css.slice(bodyStart, i);
+      i++; // consume '}'
+
+      if (!header) continue;
+
+      if (header.charAt(0) === '@'){
+        const children = parseCSS(body);
+        if (children.length){
+          nodes.push({ type: 'atrule', prelude: header, children: children });
+        } else {
+          nodes.push({ type: 'rule', selector: header, body: body, isAt: true });
+        }
+      } else {
+        nodes.push({ type: 'rule', selector: header, body: body });
+      }
+    }
+    return nodes;
+  }
+
+  function splitDeclarations(body){
+    return body
+      .split(';')
+      .map(d => d.trim())
+      .filter(Boolean);
+  }
+
+  function splitSelectors(selector){
+    return selector.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  /* ============================================================
+     RENDERERS
+     ============================================================ */
+
+  function renderFold(nodes, indent){
+    const lines = [];
+    nodes.forEach(node => {
+      if (node.type === 'comment'){
+        // In fold mode, comments are always stripped — skip
+        return;
+      }
+      if (node.type === 'rule'){
+        const sel = splitSelectors(node.selector).join(', ');
+        const decls = splitDeclarations(node.body);
+        const inner = decls.join('; ');
+        lines.push(indent + (inner ? `${sel} { ${inner}; }` : `${sel} { }`));
+      } else if (node.type === 'atrule'){
+        lines.push(`${indent}${node.prelude} {`);
+        lines.push(...renderFold(node.children, indent + '  '));
+        lines.push(`${indent}}`);
+      }
+    });
+    return lines;
+  }
+
+  function renderUnfold(nodes, indent, keepComments){
+    const lines = [];
+    nodes.forEach(node => {
+      if (node.type === 'comment'){
+        if (keepComments){
+          lines.push('');
+          lines.push(indent + node.text.trim());
+        }
+        return;
+      }
+      if (node.type === 'rule'){
+        const selectors = splitSelectors(node.selector);
+        selectors.forEach((sel, idx) => {
+          lines.push(indent + sel + (idx < selectors.length - 1 ? ',' : ' {'));
+        });
+        const decls = splitDeclarations(node.body);
+        decls.forEach(d => lines.push(`${indent}  ${d};`));
+        lines.push(indent + '}');
+      } else if (node.type === 'atrule'){
+        lines.push(`${indent}${node.prelude} {`);
+        lines.push(...renderUnfold(node.children, indent + '  ', keepComments));
+        lines.push(`${indent}}`);
+      }
+    });
+    return lines;
+  }
+
+  /* ============================================================
+     TRANSFORM ENTRY POINT
+     ============================================================ */
+
+  function transform(css, mode, keepComments){
+    let src = css;
+
+    // In fold mode: always strip comments for a clean single-line result
+    if (mode === 'fold'){
+      src = stripComments(src);
+      const nodes = parseCSS(src);
+      if (!nodes.length) return src.trim();
+      return renderFold(nodes, '').join('\n');
+    }
+
+    // In unfold mode: honour the keepComments flag
+    if (keepComments){
+      // Parse WITH comment nodes preserved
+      const nodes = parseCSS(src);
+      if (!nodes.length) return src.trim();
+      const lines = renderUnfold(nodes, '', true);
+      // Clean up: collapse 3+ blank lines, trim leading blank
+      return lines
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    } else {
+      src = stripComments(src);
+      const nodes = parseCSS(src);
+      if (!nodes.length) return src.trim();
+      return renderUnfold(nodes, '', false)
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+  }
+
+  /* ============================================================
+     UI STATE
+     ============================================================ */
+
+  const $area        = $('#cssArea');
+  const $modeSwitch  = $('#modeSwitch');
+  const $commentSw   = $('#commentSwitch');
+  const $hintBar     = $('#hintBar');
+
+  let mode         = 'fold';
+  let commentMode  = 'keep'; // 'keep' | 'strip'
+
+  /* size the comment thumb correctly */
+  function sizeCommentThumb(){
+    const $keep  = $('#cOptKeep');
+    const $strip = $('#cOptStrip');
+    const w = $keep.outerWidth();
+    $('#cThumb').css('width', w + 'px');
+  }
+
+  function updateHint(){
+    // Show hint when fold is active (comments always stripped in fold)
+    $hintBar.toggleClass('visible', mode === 'fold');
+  }
+
+  function setMode(newMode, doTransform){
+    mode = newMode;
+    $modeSwitch.toggleClass('is-unfold', mode === 'unfold');
+    $modeSwitch.find('.opt').removeClass('active').filter(`[data-mode="${mode}"]`).addClass('active');
+    updateHint();
+    if (doTransform){
+      const current = $area.val();
+      if (current.trim().length){
+        $area.val(transform(current, mode, commentMode === 'keep'));
+      }
+    }
+  }
+
+  function setCommentMode(newCMode, doTransform){
+    commentMode = newCMode;
+    $commentSw.attr('data-cmode', commentMode);
+    $commentSw.find('.c-opt').removeClass('active').filter(`[data-cmode="${commentMode}"]`).addClass('active');
+    updateHint();
+    if (doTransform){
+      const current = $area.val();
+      if (current.trim().length){
+        $area.val(transform(current, mode, commentMode === 'keep'));
+      }
+    }
+  }
+
+  /* ============================================================
+     EVENT BINDINGS
+     ============================================================ */
+
+  $modeSwitch.on('click', '.opt', function(){
+    const newMode = $(this).data('mode');
+    if (newMode === mode) return;
+    setMode(newMode, true);
+  });
+
+  $commentSw.on('click', '.c-opt', function(){
+    const newCMode = $(this).data('cmode');
+    if (newCMode === commentMode) return;
+    setCommentMode(newCMode, true);
+  });
+
+  /* ---- sample ---- */
+  const SAMPLE =
+`/* === Navigation === */
+.nav-link {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--secColor);
+  text-decoration: none;
+}
+
+/* Card component */
+.svc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 8px;
+}
+
+@media (max-width: 800px) {
+  /* Responsive overrides */
+  .svc-card {
+    width: 100%;
+    max-width: 326px;
+  }
+
+  .svc-heading h2,
+  .svc-subheading h2,
+  .svc-extra-content h2 {
+    font-size: 26px;
+  }
+}`;
+
+  $('#sampleBtn').on('click', function(){
+    $area.val(transform(SAMPLE, mode, commentMode === 'keep'));
+  });
+
+  $('#clearBtn').on('click', function(){
+    $area.val('').focus();
+  });
+
+  /* ---- copy ---- */
+  $('#copyBtn').on('click', function(){
+    const text = $area.val();
+    if (!text.trim()) return;
+    const $btn  = $(this);
+    const $lbl  = $('#copyLabel');
+
+    const finish = () => {
+      const icon = $btn.find('svg');
+      const orig = icon.html();
+      icon.html('<polyline points="20 6 9 17 4 12"/>');
+      $lbl.text('Copied');
+      $btn.addClass('copied');
+      setTimeout(() => { icon.html(orig); $lbl.text('Copy'); $btn.removeClass('copied'); }, 1400);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(finish).catch(finish);
+    } else {
+      const tmp = document.createElement('textarea');
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+      finish();
+    }
+  });
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  setTimeout(sizeCommentThumb, 0); // after render
+  setMode('fold', false);
+  setCommentMode('keep', false);
+  updateHint();
+});
+</script>
+
+</body>
+</html>

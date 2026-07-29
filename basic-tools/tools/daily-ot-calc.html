@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OT Time Calculator</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+body { background:#f4f6f9; }
+
+.preview-box{
+    background:#fff;
+    border-radius:8px;
+    padding:15px;
+    white-space:pre-line;
+    font-family:monospace;
+    border:1px solid #ddd;
+}
+
+/* Fix Select2 height to match Bootstrap */
+.select2-container .select2-selection--single {
+    height: 38px;
+}
+.select2-selection__rendered {
+    line-height: 38px !important;
+}
+.select2-selection__arrow {
+    height: 38px !important;
+}
+</style>
+</head>
+<body>
+
+<div class="container mt-5">
+<div class="card shadow">
+<div class="card-header bg-primary text-white">
+    OT Request Generator
+</div>
+
+<div class="card-body">
+<div class="row g-3">
+
+    <div class="col-md-6">
+        <label class="form-label">Name</label>
+        <input type="text" id="name" class="form-control" value="Reyvander">
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Date</label>
+        <input type="date" id="date" class="form-control">
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Start Time</label>
+        <input type="text" class="form-control" value="6:00 PM" readonly>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">End Time (Searchable)</label>
+        <select id="endTime" class="form-select">
+            <option value="">Select End Time</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Task Link</label>
+        <input type="text" id="taskLink" class="form-control"
+        placeholder="https://office.orchestra.tools/tasks/viewtask/123456789">
+        <div id="linkFeedback" class="form-text text-danger d-none">
+            Invalid Orchestra Task Link.
+        </div>
+    </div>
+
+    <div class="col-12 text-end">
+        <button class="btn btn-success" id="generateBtn">Generate</button>
+    </div>
+
+</div>
+
+<hr>
+
+<h6>Preview:</h6>
+<div class="preview-box" id="previewResult"></div>
+
+<div class="text-end mt-3">
+    <button class="btn btn-outline-primary d-none" id="copyBtn">
+        Copy Result
+    </button>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function(){
+
+    // Auto today's date
+    const today = new Date().toISOString().split('T')[0];
+    $("#date").val(today);
+
+    // Generate time options 6PM–12AM
+    function generateTimeOptions(){
+        let select = $("#endTime");
+
+        for(let hour = 18; hour <= 24; hour++){
+
+            for(let minute = 0; minute < 60; minute++){
+
+                if(hour === 24 && minute > 0) break;
+
+                let displayHour = hour;
+                let displayMinute = minute.toString().padStart(2, '0');
+                let ampm = "PM";
+
+                if(hour === 24){
+                    displayHour = 12;
+                    ampm = "AM";
+                } else if(hour > 12){
+                    displayHour = hour - 12;
+                }
+
+                let displayTime = displayHour + ":" + displayMinute + " " + ampm;
+
+                let valueHour = hour === 24 ? 0 : hour;
+                let value = valueHour.toString().padStart(2,'0') + ":" + displayMinute;
+
+                select.append(`<option value="${value}">${displayTime}</option>`);
+            }
+        }
+    }
+
+    generateTimeOptions();
+
+    // Activate Select2 searchable dropdown
+    $('#endTime').select2({
+        placeholder: "Search or select end time",
+        width: '100%'
+    });
+
+    function validateTaskLink(link){
+        const pattern = /^https:\/\/office\.orchestra\.tools\/tasks\/viewtask\/\d+$/;
+        return pattern.test(link);
+    }
+
+    function calculateDuration(endTime){
+
+        const start = new Date("1970-01-01T18:00:00");
+        let end = new Date("1970-01-01T" + endTime + ":00");
+
+        if(endTime.startsWith("00")){
+            end.setDate(end.getDate() + 1);
+        }
+
+        let diff = (end - start) / 1000;
+
+        if(diff <= 0) return null;
+
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+
+        return `${hours}hrs and ${minutes} minutes`;
+    }
+
+    function formatDate(dateString){
+        const options = { year:'numeric', month:'long', day:'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    $("#generateBtn").click(function(){
+
+        const name = $("#name").val().trim();
+        const date = $("#date").val();
+        const endTime = $("#endTime").val();
+        const link = $("#taskLink").val().trim();
+
+        if(!name || !date || !endTime || !link){
+            alert("Please complete all fields.");
+            return;
+        }
+
+        if(!validateTaskLink(link)){
+            $("#taskLink").addClass("is-invalid");
+            $("#linkFeedback").removeClass("d-none");
+            return;
+        } else {
+            $("#taskLink").removeClass("is-invalid");
+            $("#linkFeedback").addClass("d-none");
+        }
+
+        const duration = calculateDuration(endTime);
+
+        if(!duration){
+            alert("Invalid end time.");
+            return;
+        }
+
+        if(!confirm("Confirm task link and OT duration?")){
+            return;
+        }
+
+        const formattedDate = formatDate(date);
+
+        const result =
+`${name} - ${formattedDate}
+Requested OT:  ${duration}
+${link}`;
+
+        $("#previewResult").text(result);
+        $("#copyBtn").removeClass("d-none");
+    });
+
+    $("#copyBtn").click(function(){
+        navigator.clipboard.writeText($("#previewResult").text());
+        $(this).text("Copied!")
+            .removeClass("btn-outline-primary")
+            .addClass("btn-success");
+
+        setTimeout(()=>{
+            $("#copyBtn").text("Copy Result")
+                .removeClass("btn-success")
+                .addClass("btn-outline-primary");
+        },2000);
+    });
+
+});
+</script>
+
+</body>
+</html>

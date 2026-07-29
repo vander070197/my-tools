@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic SQL Prefix Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      min-height: 300px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5" style="max-width: 1000px;">
+  <div class="row justify-content-center">
+    <div class="col-12">
+
+      <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Dynamic SQL Command Generator</h5>
+          
+        </div>
+        <div class="card-body">
+
+          <!-- User Prefix -->
+          <div class="mb-3">
+            <p style="color: red; font-style: italic;font-weight: bold;">Display all page title with the template file name.</p>
+            <label class="form-label fw-bold">Enter Table Prefix (no underscore)</label>
+            <input type="text" id="prefixInput" class="form-control form-control-lg" placeholder="Ex: lilydonead">
+          </div>
+
+          <!-- Buttons -->
+          <div class="mb-3 d-flex gap-2">
+            <button class="btn btn-success" id="copyBtn">Copy Result</button>
+            <button class="btn btn-secondary" id="resetBtn">Reset</button>
+          </div>
+
+          <!-- SQL Output -->
+          <label class="form-label fw-bold">Generated SQL:</label>
+          <pre id="sqlOutput"></pre>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const prefixInput = document.getElementById("prefixInput");
+  const sqlOutput = document.getElementById("sqlOutput");
+  const copyBtn = document.getElementById("copyBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function updateSQL() {
+    let p = prefixInput.value.trim();
+    if (p !== "") p = p + "_"; // auto add underscore
+    else p = "lilydonead_"; // default prefix
+
+    sqlOutput.textContent = `
+SELECT 
+    p.ID,
+    p.post_title AS page_title,
+    CONCAT(ws.option_value, '/', p.post_name, '/') AS page_url,
+    pm.meta_value AS template_file
+FROM ${p}posts p
+LEFT JOIN ${p}postmeta pm 
+    ON p.ID = pm.post_id AND pm.meta_key = '_wp_page_template'
+CROSS JOIN (SELECT option_value FROM ${p}options WHERE option_name = 'siteurl') ws
+WHERE p.post_type = 'page' 
+  AND p.post_status = 'publish'
+  AND pm.meta_value IS NOT NULL
+  AND pm.meta_value != 'default';`;
+  }
+
+  prefixInput.addEventListener("input", updateSQL);
+
+  // Copy button functionality
+  copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(sqlOutput.textContent);
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => copyBtn.textContent = "Copy Result", 1500);
+  });
+
+  // Reset
+  resetBtn.addEventListener("click", () => {
+    prefixInput.value = "";
+    updateSQL();
+  });
+
+  // Initialize
+  updateSQL();
+</script>
+
+</body>
+</html>

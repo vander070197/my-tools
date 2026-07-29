@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Tools</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-page:    #0f0f0f;
+      --bg-sidebar: #161616;
+      --bg-main:    #1a1a1a;
+      --bg-topbar:  #1e1e1e;
+      --bg-hover:   #222222;
+      --border:     rgba(255,255,255,0.08);
+      --accent:     #4dabf7;
+      --text-1:     #f0f0f0;
+      --text-2:     #aaaaaa;
+      --text-3:     #666666;
+      --badge-bg:   rgba(77,171,247,0.12);
+      --badge-fg:   #4dabf7;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-1);
+      overflow: hidden;
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #333 transparent;
+      transition: width 0.2s ease, min-width 0.2s ease;
+    }
+
+    .sidebar.collapsed {
+      width: 52px;
+      min-width: 52px;
+    }
+
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .section-label,
+    .sidebar.collapsed .sidebar-title {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-btn {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-sidebar);
+      z-index: 1;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .toggle-btn:hover { color: var(--text-1); }
+
+    .section-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 14px 14px 5px;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 8px 14px;
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent;
+      color: var(--text-2);
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .nav-btn i {
+      font-size: 16px;
+      flex-shrink: 0;
+      opacity: 0.65;
+      transition: opacity 0.12s;
+    }
+
+    .nav-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-1);
+    }
+
+    .nav-btn:hover i { opacity: 1; }
+
+    .nav-btn.active {
+      background: var(--bg-hover);
+      color: var(--text-1);
+      border-left-color: var(--accent);
+      font-weight: 500;
+    }
+
+    .nav-btn.active i {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-main);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--bg-topbar);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-1);
+    }
+
+    .topbar-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--badge-bg);
+      color: var(--badge-fg);
+      font-weight: 500;
+    }
+
+    .content {
+      flex: 1;
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #000;
+      display: block;
+    }
+
+    /* ── Scrollbar ── */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .sidebar { width: 52px; min-width: 52px; }
+      .sidebar .nav-label, .sidebar .section-label, .sidebar .sidebar-title { display: none; }
+      .sidebar .nav-btn { justify-content: center; padding: 10px 0; }
+      .sidebar.mobile-open { width: 220px; min-width: 220px; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+      .sidebar.mobile-open .nav-label,
+      .sidebar.mobile-open .section-label,
+      .sidebar.mobile-open .sidebar-title { display: block; }
+      .sidebar.mobile-open .nav-btn { justify-content: flex-start; padding: 8px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Tool navigation">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Basic Tools</span>
+      <button class="toggle-btn" id="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+        <i class="ti ti-layout-sidebar-left-collapse" id="toggle-icon" style="font-size:18px"></i>
+      </button>
+    </div>
+
+    <div class="section-label">Attendance</div>
+    <button class="nav-btn active"
+      data-src="tools/dev-attendance-list.html"
+      data-title="PDQA Dev Attendance"
+      data-badge="Attendance"
+      onclick="loadTool(this)">
+      <i class="ti ti-users" aria-hidden="true"></i>
+      <span class="nav-label">PDQA Dev Attendance</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/daily-ot-calc.html"
+      data-title="OT Time Calculator"
+      data-badge="Attendance"
+      onclick="loadTool(this)">
+      <i class="ti ti-clock-hour-4" aria-hidden="true"></i>
+      <span class="nav-label">OT Time Calculator</span>
+    </button>
+
+    <div class="section-label">Data Tools</div>
+    <button class="nav-btn"
+      data-src="tools/pdqa-db-replace.html"
+      data-title="DB Replacement Data"
+      data-badge="Data"
+      onclick="loadTool(this)">
+      <i class="ti ti-database" aria-hidden="true"></i>
+      <span class="nav-label">DB Replacement Data</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/dynamic-sql-prefix-generator.html"
+      data-title="Dynamic SQL Prefix Generator"
+      data-badge="Data"
+      onclick="loadTool(this)">
+      <i class="ti ti-code" aria-hidden="true"></i>
+      <span class="nav-label">SQL Prefix Generator</span>
+    </button>
+
+    <div class="section-label">Link Tools</div>
+    <button class="nav-btn"
+      data-src="tools/text-link-active.html"
+      data-title="Text to Link Converter"
+      data-badge="Links"
+      onclick="loadTool(this)">
+      <i class="ti ti-link" aria-hidden="true"></i>
+      <span class="nav-label">Text to Link Converter</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/bulk-link-copy-tool.html"
+      data-title="Bulk Link Copy Tool"
+      data-badge="Links"
+      onclick="loadTool(this)">
+      <i class="ti ti-copy" aria-hidden="true"></i>
+      <span class="nav-label">Bulk Link Copy Tool</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/active-links.html"
+      data-title="Clickable Link Generator"
+      data-badge="Links"
+      onclick="loadTool(this)">
+      <i class="ti ti-external-link" aria-hidden="true"></i>
+      <span class="nav-label">Clickable Link Generator</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/permalink-generator.html"
+      data-title="Permalink Generator"
+      data-badge="Links"
+      onclick="loadTool(this)">
+      <i class="ti ti-hash" aria-hidden="true"></i>
+      <span class="nav-label">Permalink Generator</span>
+    </button>
+
+    <div class="section-label">Privacy</div>
+    <button class="nav-btn"
+      data-src="tools/privacy-notes/privacy-site.html"
+      data-title="Basic Do Not Sell"
+      data-badge="Privacy"
+      onclick="loadTool(this)">
+      <i class="ti ti-shield-off" aria-hidden="true"></i>
+      <span class="nav-label">Basic Do Not Sell</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/basic-privacy-notice-tools.html"
+      data-title="Basic Privacy Notice"
+      data-badge="Privacy"
+      onclick="loadTool(this)">
+      <i class="ti ti-file-description" aria-hidden="true"></i>
+      <span class="nav-label">Basic Privacy Notice</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/ecom-priv-notice.html"
+      data-title="Ecom Privacy Notice"
+      data-badge="Privacy"
+      onclick="loadTool(this)">
+      <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+      <span class="nav-label">Ecom Privacy Notice</span>
+    </button>
+
+    <div class="section-label">Utilities</div>
+    <button class="nav-btn"
+      data-src="tools/list-group-splitter.html"
+      data-title="List Splitter by Group Size"
+      data-badge="Utilities"
+      onclick="loadTool(this)">
+      <i class="ti ti-layout-rows" aria-hidden="true"></i>
+      <span class="nav-label">List Splitter</span>
+    </button>
+    <button class="nav-btn"
+      data-src="tools/list-remover-tool.html"
+      data-title="List Remover Tool"
+      data-badge="Utilities"
+      onclick="loadTool(this)">
+      <i class="ti ti-list-check" aria-hidden="true"></i>
+      <span class="nav-label">List Remover Tool</span>
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="topbar">
+      <i class="ti ti-users" id="topbar-icon" style="font-size:16px; color:var(--accent)" aria-hidden="true"></i>
+      <span class="topbar-title" id="topbar-title">PDQA Dev Attendance</span>
+      <span class="topbar-badge" id="topbar-badge">Attendance</span>
+    </div>
+    <div class="content">
+      <iframe
+        id="tool-frame"
+        src="tools/dev-attendance-list.html"
+        title="Tool content"
+        loading="lazy"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const frame = document.getElementById('tool-frame');
+  const topbarTitle = document.getElementById('topbar-title');
+  const topbarBadge = document.getElementById('topbar-badge');
+  const topbarIcon  = document.getElementById('topbar-icon');
+  const sidebar     = document.getElementById('sidebar');
+  const toggleIcon  = document.getElementById('toggle-icon');
+  let collapsed = false;
+
+  function loadTool(btn) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const src   = btn.dataset.src;
+    const title = btn.dataset.title;
+    const badge = btn.dataset.badge;
+    const icon  = btn.querySelector('i').className.replace('ti ', '').replace('ti-', '');
+
+    topbarTitle.textContent = title;
+    topbarBadge.textContent = badge;
+    topbarIcon.className = `ti ti-${icon}`;
+
+    frame.src = src;
+
+    if (window.innerWidth <= 640) {
+      sidebar.classList.remove('mobile-open');
+    }
+  }
+
+  function toggleSidebar() {
+    collapsed = !collapsed;
+    sidebar.classList.toggle('collapsed', collapsed);
+    toggleIcon.className = collapsed
+      ? 'ti ti-layout-sidebar-left-expand'
+      : 'ti ti-layout-sidebar-left-collapse';
+    toggleIcon.style.fontSize = '18px';
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Formatter</title>
+<link rel="icon" type="image/x-icon" href="https://i.imgur.com/o9iTnbE.png">
+<style>
+  :root{
+    --bg:        #0e1013;
+    --panel:     #16191f;
+    --panel-alt: #1b1f27;
+    --border:    #262b34;
+    --text:      #e4e7ec;
+    --muted:     #7d8494;
+    --accent:    #e34c26;   /* HTML5-orange, ties to the subject */
+    --accent-dim:#e34c2633;
+    --teal:      #3ec9b0;
+    --teal-dim:  #3ec9b022;
+    --danger:    #e2574c;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:28px 24px 50px;
+  }
+  .wrap{
+    width:90vw;
+    max-width:1600px;
+    margin:0 auto;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  header .tag-icon{
+    font-family:var(--mono);
+    font-size:14px;
+    color:var(--accent);
+    border:1px solid var(--accent-dim);
+    background:var(--accent-dim);
+    padding:3px 8px;
+    border-radius:5px;
+  }
+  h1{
+    font-size:21px;
+    font-weight:650;
+    letter-spacing:-0.01em;
+    margin:0;
+  }
+  .storage-badge{
+    margin-left:auto;
+    font-size:11px;
+    color:var(--muted);
+    border:1px solid var(--border);
+    padding:4px 9px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .storage-badge .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--teal);
+  }
+  .storage-badge.session .dot{ background:#e0a83e; }
+
+  .subtitle{
+    color:var(--muted);
+    font-size:13.5px;
+    margin:6px 0 22px;
+  }
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:22px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:13px 18px;
+    margin-bottom:10px;
+  }
+  .toolbar-group{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .toolbar-label{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    margin-right:2px;
+  }
+  .check{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13.5px;
+    color:var(--text);
+    cursor:pointer;
+    user-select:none;
+  }
+  .check input{
+    accent-color:var(--accent);
+    width:15px;
+    height:15px;
+    cursor:pointer;
+  }
+  .divider{
+    width:1px;
+    align-self:stretch;
+    background:var(--border);
+  }
+  .tag-btn{
+    font-family:var(--mono);
+    font-size:12.5px;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:6px 11px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:border-color .12s, transform .08s;
+  }
+  .tag-btn:hover{ border-color:var(--accent); }
+  .tag-btn:active{ transform:scale(.96); }
+  .tag-btn .brk{ color:var(--muted); }
+  .tag-btn .nm{ color:var(--accent); }
+  #wrapTagButtons{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .hint{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .btn{
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:600;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:7px 13px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:border-color .12s, transform .08s, opacity .12s;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .btn:hover{ border-color:var(--accent); }
+  .btn:active{ transform:scale(.96); }
+  .btn:disabled{ opacity:.35; cursor:not-allowed; transform:none; border-color:var(--border); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.primary:hover{ filter:brightness(1.08); }
+  .btn.danger{ color:var(--danger); }
+  .btn.danger:hover{ border-color:var(--danger); }
+  .btn.copied{ background:var(--teal); border-color:var(--teal); color:#0e1013; }
+
+  .save-flash{
+    font-size:11.5px;
+    color:var(--teal);
+    opacity:0;
+    transition:opacity .25s;
+  }
+  .save-flash.show{ opacity:1; }
+
+  .panes{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    width:100%;
+  }
+  @media (max-width:820px){
+    .panes{ grid-template-columns:1fr; }
+  }
+  .pane{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    min-height:82vh;
+  }
+  .pane-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel-alt);
+    gap:10px;
+  }
+  .pane-title{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .count{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+  }
+  textarea#input{
+    flex:1;
+    resize:none;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:13.5px;
+    line-height:1.6;
+    padding:16px;
+    width:100%;
+  }
+  textarea#input::placeholder{ color:#4b5160; }
+
+  pre#output{
+    flex:1;
+    margin:0;
+    padding:16px;
+    overflow:auto;
+    font-family:var(--mono);
+    font-size:13.5px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-word;
+    width:100%;
+  }
+  pre#output:empty::before{
+    content:"Formatted HTML will appear here…";
+    color:#4b5160;
+  }
+
+  .tok-tag{ color:var(--accent); }
+  .tok-punc{ color:var(--muted); }
+  .tok-attr{ color:var(--teal); }
+  .tok-comment{ color:#5b6272; font-style:italic; }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    margin-top:18px;
+  }
+
+  /* ---------- Saved Data popup ---------- */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(6,7,9,.72);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-panel{
+    width:80vw;
+    max-height:82vh;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel-alt);
+  }
+  .modal-head h2{
+    font-size:15px;
+    margin:0;
+    flex:0 0 auto;
+  }
+  .modal-sub{
+    font-size:12px;
+    color:var(--muted);
+    margin-right:auto;
+  }
+  .modal-close{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 6px;
+  }
+  .modal-close:hover{ color:var(--text); }
+  .modal-body{
+    overflow-y:auto;
+    padding:14px 18px;
+    flex:1;
+  }
+  .modal-note{
+    font-size:12px;
+    color:#e0a83e;
+    background:#e0a83e18;
+    border:1px solid #e0a83e33;
+    padding:8px 12px;
+    border-radius:8px;
+    margin-bottom:14px;
+  }
+  .entry-empty{
+    color:var(--muted);
+    font-size:13px;
+    text-align:center;
+    padding:40px 0;
+  }
+  .entry-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    margin-bottom:10px;
+    background:var(--panel-alt);
+  }
+  .entry-main{ flex:1; min-width:0; }
+  .entry-time{
+    font-size:11.5px;
+    color:var(--teal);
+    font-family:var(--mono);
+    margin-bottom:4px;
+  }
+  .entry-preview{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .entry-meta{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  .entry-actions{
+    display:flex;
+    gap:6px;
+    flex:0 0 auto;
+  }
+  .icon-btn{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:12px;
+    padding:6px 9px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .icon-btn:hover{ border-color:var(--accent); color:var(--text); }
+  .icon-btn.del:hover{ border-color:var(--danger); color:var(--danger); }
+
+  /* ---------- Insert Link popover ---------- */
+  .link-popover-panel{
+    width:min(420px, 90vw);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+  }
+  .link-popover-panel h3{
+    margin:0 0 12px;
+    font-size:15px;
+  }
+  .link-selected-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .link-selected-preview{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--teal);
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px 10px;
+    margin-bottom:14px;
+    max-height:70px;
+    overflow-y:auto;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  .link-field-label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  #linkUrlInput{
+    width:100%;
+    font-family:var(--mono);
+    font-size:13.5px;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 11px;
+    border-radius:7px;
+    outline:none;
+  }
+  #linkUrlInput:focus{ border-color:var(--accent); }
+  .link-field-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .link-field-hint code{
+    font-family:var(--mono);
+    color:var(--teal);
+  }
+  .link-popover-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:16px;
+  }
+
+  /* ---------- Custom right-click context menu ---------- */
+  .context-menu{
+    display:none;
+    position:fixed;
+    z-index:200;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    padding:4px;
+  }
+  .context-menu.open{ display:block; }
+  .context-menu button{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:13px;
+    padding:8px 12px;
+    border-radius:5px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .context-menu button:hover{ background:var(--panel-alt); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="tag-icon">&lt;/&gt;</span>
+    <h1>HTML Formatter</h1>
+    <span class="storage-badge" id="storageBadge"><span class="dot"></span><span id="storageBadgeText">checking storage…</span></span>
+  </header>
+  <p class="subtitle">Type or paste content on the left — get clean, copyable HTML on the right. Your work is saved automatically.</p>
+
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <span class="toolbar-label">Wrap output</span>
+      <label class="check">
+        <input type="checkbox" id="optWpHtml">
+        wp:html block
+      </label>
+      <label class="check">
+        <input type="checkbox" id="optPTag">
+        each line in &lt;p&gt;
+      </label>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-label">Wrap selection</span>
+      <span id="wrapTagButtons"><!-- generated from WRAP_TAGS --></span>
+      <span class="hint" id="selHint">select text in the input first</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <span class="toolbar-label">History</span>
+      <button class="btn" id="undoBtn" disabled>↶ Undo</button>
+      <button class="btn" id="redoBtn" disabled>↷ Redo</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="toolbar-group">
+      <button class="btn" id="clearCurrentBtn">Clear Current</button>
+      <button class="btn" id="openSavedBtn">Saved Data <span id="savedCount">(0)</span></button>
+      <button class="btn danger" id="clearAllBtn">Clear All Storage</button>
+    </div>
+
+    <span class="save-flash" id="saveFlash">Saved</span>
+  </div>
+
+  <div class="panes">
+    <div class="pane">
+      <div class="pane-head">
+        <span class="pane-title">Input</span>
+        <span class="count" id="inCount">0 chars</span>
+      </div>
+      <textarea id="input" placeholder="Type or paste your content here…" spellcheck="false"></textarea>
+    </div>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span class="pane-title">Output</span>
+        <button class="btn primary" id="copyBtn">Copy</button>
+      </div>
+      <pre id="output"></pre>
+    </div>
+  </div>
+
+  <footer id="footerNote">Formatting happens locally in your browser — nothing is uploaded.</footer>
+</div>
+
+<!-- Saved Data popup -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2>Saved Data</h2>
+      <span class="modal-sub" id="modalSub">0 snapshots</span>
+      <button class="icon-btn" id="entriesUndoBtn" disabled>↶ Undo</button>
+      <button class="icon-btn" id="entriesRedoBtn" disabled>↷ Redo</button>
+      <button class="btn danger" id="clearAllBtnModal">Clear All Storage</button>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- entries injected here -->
+    </div>
+  </div>
+</div>
+
+<!-- Insert Link popover -->
+<div class="modal-overlay" id="linkPopoverOverlay">
+  <div class="link-popover-panel">
+    <h3>Insert link</h3>
+    <div class="link-selected-label">Selected text</div>
+    <div class="link-selected-preview" id="linkSelectedPreview"></div>
+    <form id="linkPopoverForm">
+      <label class="link-field-label" for="linkUrlInput">URL, email, or phone number</label>
+      <input type="text" id="linkUrlInput" autocomplete="off">
+      <div class="link-field-hint">Email addresses and phone numbers are converted to <code>mailto:</code> / <code>tel:</code> automatically.</div>
+      <div class="link-popover-actions">
+        <button type="button" class="btn" id="linkPopoverCancel">Cancel</button>
+        <button type="submit" class="btn primary">Add Link</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Custom right-click menu (shown only when text is selected in the input) -->
+<div class="context-menu" id="customContextMenu">
+  <button id="ctxInsertLink">🔗 Insert link for selection</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+$(function(){
+
+  /* =========================================================
+     STORAGE LAYER
+     Tries real localStorage first. If it's unavailable (e.g.
+     the sandboxed preview inside Claude.ai blocks it), it
+     falls back to an in-memory store so the tool still works
+     for the current tab — it just won't survive a page reload
+     in that environment. Once you download this file and open
+     it directly in a normal browser (or host it), real
+     localStorage kicks in automatically and saves persist.
+     ========================================================= */
+  var Store = (function(){
+    var memory = {};
+    var persistent = true;
+    try{
+      var t = '__ht_test__';
+      window.localStorage.setItem(t, '1');
+      window.localStorage.removeItem(t);
+    }catch(e){
+      persistent = false;
+    }
+    return {
+      isPersistent: persistent,
+      getItem: function(k){
+        if(persistent){
+          try{ return window.localStorage.getItem(k); }catch(e){ persistent = false; }
+        }
+        return memory.hasOwnProperty(k) ? memory[k] : null;
+      },
+      setItem: function(k, v){
+        if(persistent){
+          try{ window.localStorage.setItem(k, v); return; }catch(e){ persistent = false; }
+        }
+        memory[k] = v;
+      },
+      removeItem: function(k){
+        if(persistent){
+          try{ window.localStorage.removeItem(k); }catch(e){ /* ignore */ }
+        }
+        delete memory[k];
+      }
+    };
+  })();
+
+  var ENTRIES_KEY = 'htmlFormatter.entries';
+  var GROUP_WINDOW_MS = 60 * 1000; // updates within this window collapse into one snapshot
+  var MAX_ENTRIES = 50;
+
+  function loadEntries(){
+    try{
+      var raw = Store.getItem(ENTRIES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveEntries(entries){
+    Store.setItem(ENTRIES_KEY, JSON.stringify(entries));
+    $('#savedCount').text('(' + entries.length + ')');
+  }
+
+  // reflect storage mode in the header badge
+  (function initBadge(){
+    var $b = $('#storageBadge');
+    if(Store.isPersistent){
+      $('#storageBadgeText').text('saved to this browser');
+    } else {
+      $b.addClass('session');
+      $('#storageBadgeText').text('session only (preview)');
+      $('#footerNote').html('Formatting happens locally in your browser. This preview can\'t reach real browser storage, so saved data lives only in this tab — download the file and open it normally to keep it across sessions.');
+    }
+  })();
+
+  /* =========================================================
+     OUTPUT BUILDING (formatting + highlighting)
+     ========================================================= */
+  var rawOutput = '';
+
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function highlight(escaped){
+    escaped = escaped.replace(/(&lt;!--[\s\S]*?--&gt;)/g, function(m){
+      return '<span class="tok-comment">' + m + '</span>';
+    });
+    escaped = escaped.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^&]*?)?)(&gt;)/g,
+      function(m, open, tag, attrs, close){
+        return '<span class="tok-punc">' + open + '</span>' +
+               '<span class="tok-tag">' + tag + '</span>' +
+               '<span class="tok-attr">' + attrs + '</span>' +
+               '<span class="tok-punc">' + close + '</span>';
+      });
+    return escaped;
+  }
+
+  function buildOutput(){
+    var raw = $('#input').val();
+    $('#inCount').text(raw.length + ' chars');
+
+    var content = raw;
+
+    if ($('#optPTag').is(':checked')){
+      content = raw.split('\n')
+        .map(function(l){ return l.trim(); })
+        .filter(function(l){ return l.length > 0; })
+        .map(function(l){ return '<p>' + l + '</p>'; })
+        .join('\n');
+    }
+    if ($('#optWpHtml').is(':checked')){
+      content = '<!-- wp:html -->\n' + content + '\n<!-- /wp:html -->';
+    }
+
+    rawOutput = content;
+    $('#output').html(highlight(escapeHtml(content)));
+  }
+
+  /* =========================================================
+     EDITOR UNDO / REDO
+     ========================================================= */
+  var history = [''];
+  var historyIndex = 0;
+  var applyingHistory = false;
+
+  function updateUndoRedoButtons(){
+    $('#undoBtn').prop('disabled', historyIndex <= 0);
+    $('#redoBtn').prop('disabled', historyIndex >= history.length - 1);
+  }
+
+  function commitValue(val){
+    if (val === history[historyIndex]) return;
+    history = history.slice(0, historyIndex + 1);
+    history.push(val);
+    if (history.length > 100) history.shift();
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function setEditorValue(val, opts){
+    applyingHistory = true;
+    $('#input').val(val);
+    buildOutput();
+    applyingHistory = false;
+    if (!opts || !opts.skipAutosave) scheduleAutosave(true);
+  }
+
+  $('#undoBtn').on('click', function(){
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    setEditorValue(history[historyIndex]);
+    updateUndoRedoButtons();
+  });
+  $('#redoBtn').on('click', function(){
+    if (historyIndex >= history.length - 1) return;
+    historyIndex++;
+    setEditorValue(history[historyIndex]);
+    updateUndoRedoButtons();
+  });
+
+  // keyboard shortcuts
+  $(document).on('keydown', function(e){
+    var mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    if (e.key.toLowerCase() === 'z' && !e.shiftKey){
+      e.preventDefault();
+      $('#undoBtn').trigger('click');
+    } else if ((e.key.toLowerCase() === 'y') || (e.key.toLowerCase() === 'z' && e.shiftKey)){
+      e.preventDefault();
+      $('#redoBtn').trigger('click');
+    }
+  });
+
+  /* =========================================================
+     AUTOSAVE (debounced) — writes a snapshot into Store
+     ========================================================= */
+  var saveTimer = null;
+  var commitTimer = null;
+
+  function flashSaved(){
+    var $f = $('#saveFlash');
+    $f.addClass('show');
+    clearTimeout($f.data('t'));
+    var t = setTimeout(function(){ $f.removeClass('show'); }, 1000);
+    $f.data('t', t);
+  }
+
+  function autosaveNow(){
+    var raw = $('#input').val();
+    if (raw.trim() === '') return; // nothing worth saving
+
+    var entries = loadEntries();
+    var last = entries[entries.length - 1];
+    var now = Date.now();
+
+    if (last && (now - last.id) < GROUP_WINDOW_MS){
+      last.input = raw;
+      last.output = rawOutput;
+      last.timestamp = new Date(now).toISOString();
+    } else {
+      entries.push({ id: now, timestamp: new Date(now).toISOString(), input: raw, output: rawOutput });
+      if (entries.length > MAX_ENTRIES) entries.shift();
+    }
+    saveEntries(entries);
+    flashSaved();
+    if ($('#modalOverlay').hasClass('open')) renderEntriesList();
+  }
+
+  function scheduleAutosave(immediate){
+    clearTimeout(saveTimer);
+    if (immediate){ autosaveNow(); return; }
+    saveTimer = setTimeout(autosaveNow, 800);
+  }
+
+  /* =========================================================
+     INPUT EVENTS
+     ========================================================= */
+  $('#input').on('input paste', function(){
+    setTimeout(function(){
+      buildOutput();
+      clearTimeout(commitTimer);
+      commitTimer = setTimeout(function(){
+        if (!applyingHistory) commitValue($('#input').val());
+      }, 400);
+      scheduleAutosave(false);
+    }, 0);
+  });
+
+  $('#optWpHtml, #optPTag').on('change', function(){
+    buildOutput();
+    scheduleAutosave(true);
+  });
+
+  /* =========================================================
+     WRAP-SELECTION BUTTONS
+     Add or remove tags here — the UI regenerates automatically.
+       tag         - the HTML tag name (required)
+       className   - optional CSS class, e.g. 'comp' for <mark class="comp">
+       label       - optional button text override (defaults to tag, or tag.className)
+       requiresHref- set true for link-style tags; clicking asks for a URL
+                      (or, with nothing selected, auto-detects links in the
+                      whole input) instead of doing a plain wrap
+     ========================================================= */
+  var WRAP_TAGS = [
+    { tag: 'span' },
+    { tag: 'strong' },
+    { tag: 'small' },
+    { tag: 'a', requiresHref: true },
+    { tag: 'mark', className: 'comp' }
+    // { tag: 'em' },  <- example: add a new one right here
+  ];
+
+  function tagLabel(def){
+    if (def.label) return def.label;
+    return def.className ? (def.tag + '.' + def.className) : def.tag;
+  }
+  function openTag(def){
+    return def.className ? ('<' + def.tag + ' class="' + def.className + '">') : ('<' + def.tag + '>');
+  }
+  function closeTag(def){
+    return '</' + def.tag + '>';
+  }
+  function findTagDef(tag){
+    return WRAP_TAGS.filter(function(d){ return d.tag === tag; })[0];
+  }
+
+  function renderWrapTagButtons(){
+    var $container = $('#wrapTagButtons').empty();
+    WRAP_TAGS.forEach(function(def){
+      var $btn = $('<button class="tag-btn"></button>').attr('data-tag', def.tag);
+      $btn.append('<span class="brk">&lt;</span>');
+      $btn.append($('<span class="nm"></span>').text(tagLabel(def)));
+      $btn.append('<span class="brk">&gt;</span>');
+      $container.append($btn);
+    });
+  }
+  renderWrapTagButtons();
+
+  function flashSelHint(msg){
+    $('#selHint').text(msg).css('color', 'var(--accent)');
+    setTimeout(function(){ $('#selHint').css('color', ''); }, 1500);
+  }
+
+  function applyPlainWrap(def, start, end){
+    var ta = document.getElementById('input');
+    var val = ta.value;
+    var wrapped = openTag(def) + val.substring(start, end) + closeTag(def);
+    var newVal = val.substring(0, start) + wrapped + val.substring(end);
+
+    ta.value = newVal;
+    ta.focus();
+    var pos = start + wrapped.length;
+    ta.setSelectionRange(pos, pos);
+
+    buildOutput();
+    commitValue(newVal);
+    scheduleAutosave(true);
+  }
+
+  $('#wrapTagButtons').on('click', '.tag-btn', function(){
+    var def = findTagDef($(this).data('tag'));
+    var ta = document.getElementById('input');
+    var start = ta.selectionStart, end = ta.selectionEnd;
+
+    if (def.requiresHref){
+      if (start === end){
+        // nothing selected: auto-detect links across the whole input instead
+        runAutoLink();
+      } else {
+        openLinkPopover(start, end);
+      }
+      return;
+    }
+
+    if (start === end){
+      flashSelHint('select text in the input first');
+      return;
+    }
+    applyPlainWrap(def, start, end);
+  });
+
+  /* =========================================================
+     LINK (<a>) SUPPORT
+     - Selecting text + clicking "a" (or right-click > Insert link)
+       opens a small popover asking for the URL.
+     - Clicking "a" with nothing selected auto-detects URLs, email
+       addresses, and phone numbers anywhere in the input and turns
+       them into real links.
+     ========================================================= */
+  var pendingLinkRange = null;
+
+  function normalizeHref(raw){
+    var v = raw.trim();
+    if (!v) return null;
+    if (/^(https?:|mailto:|tel:)/i.test(v)) return v;
+    if (/^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$/.test(v)) return 'mailto:' + v;
+    var digitsOnly = v.replace(/[^\d]/g, '');
+    if (/^[\d\-\s().+]+$/.test(v) && digitsOnly.length >= 7) return 'tel:' + v.replace(/[^\d+]/g, '');
+    if (/^www\./i.test(v)) return 'https://' + v;
+    return 'https://' + v;
+  }
+
+  function openLinkPopover(start, end){
+    pendingLinkRange = { start: start, end: end };
+    var ta = document.getElementById('input');
+    $('#linkUrlInput').val('').attr('placeholder', 'https://example.com, name@email.com, or a phone number');
+    $('#linkSelectedPreview').text(ta.value.substring(start, end));
+    $('#linkPopoverOverlay').addClass('open');
+    setTimeout(function(){ $('#linkUrlInput').trigger('focus'); }, 30);
+  }
+  function closeLinkPopover(){
+    $('#linkPopoverOverlay').removeClass('open');
+    pendingLinkRange = null;
+  }
+
+  $('#linkPopoverCancel, #linkPopoverOverlay').on('click', function(e){
+    if (e.target === this) closeLinkPopover();
+  });
+  $('#linkPopoverCancel').on('click', closeLinkPopover);
+
+  $('#linkPopoverForm').on('submit', function(e){
+    e.preventDefault();
+    if (!pendingLinkRange) return;
+    var href = normalizeHref($('#linkUrlInput').val());
+    if (!href){
+      $('#linkUrlInput').trigger('focus');
+      return;
+    }
+    var ta = document.getElementById('input');
+    var val = ta.value;
+    var start = pendingLinkRange.start, end = pendingLinkRange.end;
+    var wrapped = '<a href="' + href + '">' + val.substring(start, end) + '</a>';
+    var newVal = val.substring(0, start) + wrapped + val.substring(end);
+
+    ta.value = newVal;
+    buildOutput();
+    commitValue(newVal);
+    scheduleAutosave(true);
+    closeLinkPopover();
+  });
+
+  // URL / email / phone auto-detection across the whole input
+  var AUTO_LINK_RE = /(https?:\/\/[^\s<>"')]+)|(\bwww\.[^\s<>"'()]+)|([\w.+-]+@[\w-]+\.[a-zA-Z]{2,})|(\+?\d[\d\-\s().]{5,}\d)/g;
+
+  function autoLinkReplacer(match, url, www, email, phone){
+    if (url) return '<a href="' + url + '">' + url + '</a>';
+    if (www) return '<a href="https://' + www + '">' + www + '</a>';
+    if (email) return '<a href="mailto:' + email + '">' + email + '</a>';
+    if (phone){
+      var digits = phone.replace(/[^\d]/g, '');
+      if (digits.length < 7) return match; // too short to be a real phone number
+      var telValue = phone.replace(/[^\d+]/g, '');
+      return '<a href="tel:' + telValue + '">' + phone + '</a>';
+    }
+    return match;
+  }
+
+  function autoLinkText(text){
+    // leave anything already inside an <a>...</a> untouched, so re-running
+    // auto-link (or mixing it with manual links) never double-wraps
+    var parts = text.split(/(<a\b[^>]*>[\s\S]*?<\/a>)/gi);
+    return parts.map(function(part){
+      if (/^<a\b/i.test(part)) return part;
+      return part.replace(AUTO_LINK_RE, autoLinkReplacer);
+    }).join('');
+  }
+
+  function runAutoLink(){
+    var ta = document.getElementById('input');
+    var before = ta.value;
+    var after = autoLinkText(before);
+    if (after === before){
+      flashSelHint('no URLs, emails, or phone numbers found');
+      return;
+    }
+    ta.value = after;
+    buildOutput();
+    commitValue(after);
+    scheduleAutosave(true);
+  }
+
+  // right-click a selection in the input to insert a link instead of using the toolbar
+  $('#input').on('contextmenu', function(e){
+    var ta = this;
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    if (start === end) return; // no selection: let the normal browser menu show
+    e.preventDefault();
+    $('#customContextMenu')
+      .css({ top: e.pageY + 'px', left: e.pageX + 'px' })
+      .addClass('open')
+      .data('range', { start: start, end: end });
+  });
+  $('#ctxInsertLink').on('click', function(){
+    var range = $('#customContextMenu').data('range');
+    $('#customContextMenu').removeClass('open');
+    if (range) openLinkPopover(range.start, range.end);
+  });
+  $(document).on('click', function(e){
+    if (!$(e.target).closest('#customContextMenu').length) $('#customContextMenu').removeClass('open');
+  });
+  $(document).on('keydown', function(e){
+    if (e.key === 'Escape'){ closeLinkPopover(); $('#customContextMenu').removeClass('open'); }
+  });
+
+  /* =========================================================
+     CLEAR CURRENT (editor only — storage untouched)
+     ========================================================= */
+  $('#clearCurrentBtn').on('click', function(){
+    if ($('#input').val() === '') return;
+    setEditorValue('', { skipAutosave: true });
+    commitValue('');
+  });
+
+  /* =========================================================
+     COPY
+     ========================================================= */
+  $('#copyBtn').on('click', function(){
+    var $btn = $(this);
+    function finish(){
+      $btn.addClass('copied').text('Copied!');
+      setTimeout(function(){ $btn.removeClass('copied').text('Copy'); }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(rawOutput).then(finish).catch(fallbackCopy);
+    } else { fallbackCopy(); }
+    function fallbackCopy(){
+      var tmp = document.createElement('textarea');
+      tmp.value = rawOutput;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+      finish();
+    }
+  });
+
+  /* =========================================================
+     SAVED DATA POPUP + its own undo/redo for deletions/edits
+     ========================================================= */
+  var entriesUndoStack = [];
+  var entriesRedoStack = [];
+
+  function pushEntriesHistory(){
+    entriesUndoStack.push(JSON.stringify(loadEntries()));
+    if (entriesUndoStack.length > 50) entriesUndoStack.shift();
+    entriesRedoStack = [];
+    updateEntriesUndoRedoButtons();
+  }
+  function updateEntriesUndoRedoButtons(){
+    $('#entriesUndoBtn').prop('disabled', entriesUndoStack.length === 0);
+    $('#entriesRedoBtn').prop('disabled', entriesRedoStack.length === 0);
+  }
+
+  $('#entriesUndoBtn').on('click', function(){
+    if (!entriesUndoStack.length) return;
+    entriesRedoStack.push(JSON.stringify(loadEntries()));
+    var prev = JSON.parse(entriesUndoStack.pop());
+    saveEntries(prev);
+    renderEntriesList();
+    updateEntriesUndoRedoButtons();
+  });
+  $('#entriesRedoBtn').on('click', function(){
+    if (!entriesRedoStack.length) return;
+    entriesUndoStack.push(JSON.stringify(loadEntries()));
+    var next = JSON.parse(entriesRedoStack.pop());
+    saveEntries(next);
+    renderEntriesList();
+    updateEntriesUndoRedoButtons();
+  });
+
+  function fmtTime(iso){
+    try{ return new Date(iso).toLocaleString(); }catch(e){ return iso; }
+  }
+  function preview(str){
+    var flat = str.replace(/\s+/g, ' ').trim();
+    return flat.length > 90 ? flat.slice(0, 90) + '…' : (flat || '(empty)');
+  }
+
+  function renderEntriesList(){
+    var entries = loadEntries();
+    $('#savedCount').text('(' + entries.length + ')');
+    $('#modalSub').text(entries.length + (entries.length === 1 ? ' snapshot' : ' snapshots'));
+
+    var $body = $('#modalBody');
+    $body.empty();
+
+    if (!Store.isPersistent){
+      $body.append('<div class="modal-note">This preview window can\'t reach real browser storage — these snapshots exist only in this tab. Download the file and open it directly in your browser to save data permanently.</div>');
+    }
+
+    if (!entries.length){
+      $body.append('<div class="entry-empty">No saved snapshots yet. Keep typing in the input — they\'ll show up here automatically.</div>');
+      return;
+    }
+
+    entries.slice().reverse().forEach(function(entry){
+      var $item = $('<div class="entry-item"></div>');
+      var $main = $('<div class="entry-main"></div>');
+      $main.append('<div class="entry-time">' + fmtTime(entry.timestamp) + '</div>');
+      $main.append('<div class="entry-preview"></div>').find('.entry-preview').text(preview(entry.input));
+      $main.append('<div class="entry-meta">' + entry.input.length + ' input chars · ' + entry.output.length + ' output chars</div>');
+
+      var $actions = $('<div class="entry-actions"></div>');
+      var $restore = $('<button class="icon-btn">Restore</button>');
+      var $del = $('<button class="icon-btn del">✕</button>');
+
+      $restore.on('click', function(){
+        setEditorValue(entry.input, { skipAutosave: true });
+        commitValue(entry.input);
+        scheduleAutosave(true);
+        closeModal();
+      });
+      $del.on('click', function(){
+        pushEntriesHistory();
+        var remaining = loadEntries().filter(function(e){ return e.id !== entry.id; });
+        saveEntries(remaining);
+        renderEntriesList();
+      });
+
+      $actions.append($restore, $del);
+      $item.append($main, $actions);
+      $body.append($item);
+    });
+  }
+
+  function openModal(){
+    renderEntriesList();
+    updateEntriesUndoRedoButtons();
+    $('#modalOverlay').addClass('open');
+  }
+  function closeModal(){
+    $('#modalOverlay').removeClass('open');
+  }
+
+  $('#openSavedBtn').on('click', openModal);
+  $('#modalCloseBtn').on('click', closeModal);
+  $('#modalOverlay').on('click', function(e){
+    if (e.target === this) closeModal();
+  });
+  $(document).on('keydown', function(e){
+    if (e.key === 'Escape') closeModal();
+  });
+
+  /* =========================================================
+     CLEAR ALL STORAGE (available in toolbar and inside popup)
+     ========================================================= */
+  function clearAllStorage(){
+    if (!confirm('Delete all saved snapshots? This cannot be undone from outside the Saved Data popup.')) return;
+    pushEntriesHistory();
+    saveEntries([]);
+    renderEntriesList();
+  }
+  $('#clearAllBtn, #clearAllBtnModal').on('click', clearAllStorage);
+
+  /* =========================================================
+     INITIAL LOAD — restore the most recent snapshot, if any
+     ========================================================= */
+  (function init(){
+    var entries = loadEntries();
+    $('#savedCount').text('(' + entries.length + ')');
+    if (entries.length){
+      var last = entries[entries.length - 1];
+      $('#input').val(last.input);
+    }
+    history = [$('#input').val()];
+    historyIndex = 0;
+    updateUndoRedoButtons();
+    buildOutput();
+  })();
+
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDQA TABLE DB REPLACEMENT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      form {margin:50px auto 0; padding:30px; box-shadow:rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; max-width:80%;}
+      form label {margin:0 0 10px;}
+      .card { max-width: 80%; margin: 50px auto 0; box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; }
+      .error_input{   box-shadow: 0 0 0 .25rem rgba(220, 53, 69, .25);border-color: #dc3545;}
+
+      .overlay {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0, 0, 0, 0.5); z-index:9998;}
+.custom-alert.error {background-color:#df727d;}
+.custom-alert.success {background-color:#198754;}
+.custom-alert .close-btn:hover {color:#000;}
+
+
+.custom-alert .close-btn {position:absolute; top:-18px; right:-13px; font-size:43px; color:#555; cursor:pointer; font-weight:bold; background:#fff; border-radius:50px; line-height:39px; height:50px; display:block; width:50px; text-align:center;}
+.custom-alert {display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); min-width:300px; max-width:500px;  padding:50px 25px; border-radius:8px; box-shadow:0 4px 12px rgba(0, 0, 0, 0.25); z-index:9999; color:#fff;}
+.custom-alert p {margin:0; font-size:16px; line-height:1.4; font-weight:600;}
+.custom-alert .close-btn {position:absolute; top:-18px; right:-13px; font-size:43px; color:#555; cursor:pointer; font-weight:bold; background:#fff; border-radius:50px; line-height:39px; height:50px; display:block; width:50px; text-align:center;}
+
+    </style>
+</head>
+<body>
+
+<!-- Overlay + Alert -->
+<div id="overlay" class="overlay"></div>
+<div id="custom-alert" class="custom-alert">
+  <span class="close-btn" onclick="hideAlert()">&times;</span>
+  <p id="alert-message"></p>
+</div>
+
+    <form action="#" method="POST" id="" class="">
+        <div class="container">
+          <div class="row">
+            <div class="col">
+              <div class="row" >
+                <div class="col">
+                  <div class="form-group" >
+                    <label>
+                      <b>Table Prefix</b>
+                    </label>
+                    <input type="text" class="form-control required" placeholder="Enter table prefix" required="required" id="input-table-prefix">
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group" >
+                    <label>
+                      <b>Local Link</b>
+                    </label>
+                    <input type="text" class="form-control required input-link" placeholder="Enter local link" required="required" id="input-local-link">
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group" >
+                    <label>
+                      <b id="">Live Link</b>
+                    </label>
+                    <input type="text" class="form-control required input-link" placeholder="Enter live link" required="required" id="input-live-link">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <div class="card">
+        <div class="card-header">
+          Replace Local to Live links
+        </div>
+        <div class="card-body">
+<pre id="code-block"><code>UPDATE <span class="db-table">table</span>_yoast_indexable SET permalink = REPLACE(permalink, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_posts SET post_content = REPLACE(post_content, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_posts SET guid = REPLACE(guid, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_yoast_seo_links SET url = REPLACE(url, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_yoast_indexable SET open_graph_image = REPLACE(open_graph_image, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_yoast_indexable SET twitter_image = REPLACE(twitter_image, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_yoast_indexable SET open_graph_image_meta = REPLACE(open_graph_image_meta, '<span class="local">local</span>', '<span class="live">live</span>');</code></pre>
+UPDATE <span class="db-table">table</span>_options SET option_value = REPLACE(option_value, '<span class="local">local</span>', '<span class="live">live</span>');
+        <button type="button" class="btn btn-primary" id="copy-btn">Copy</button>
+        <button type="button" class="btn btn-dark" id="reset-btn">Reset</button>
+        </div>
+      </div>
+
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script>
+        $(document).ready(function() {
+          $('#input-table-prefix').on('input', function() {
+  let cleanVal = $(this).val().replace(/[^a-zA-Z0-9]/g, '');
+  $(this).val(cleanVal); // Update input with cleaned value
+
+  // If input is empty, show placeholder text
+  let displayVal = cleanVal || 'table';
+  $('span.db-table').text(displayVal);
+});
+
+function handleInput(selector, target, placeholder = 'placeholder', mustInclude = true) {
+  $(selector).on('input', function () {
+    let $input = $(this);
+    let url = $input.val().trim().replace(/\/$/, '');
+
+   // Define an array of keywords to check for
+const keywords = ['proweaversite', 'link2newsite', 'alkerdigitaltechnologies'];
+
+// Check if the URL contains at least one of the keywords
+const containsKeyword = keywords.some(keyword => url.includes(keyword));
+
+// Logic: input-local-link must include, input-live-link must NOT include
+const isValid = mustInclude ? containsKeyword : !containsKeyword;
+
+if (isValid) {
+  $input.removeClass('error_input');
+  $(target).text(url || placeholder);
+} else {
+  $input.addClass('error_input');
+  $(target).text(placeholder); // Prevent updating with invalid
+}
+
+  });
+}
+
+// local link MUST include "proweaversite"
+handleInput('#input-local-link', '.local', 'local', true);
+
+// live link MUST NOT include "proweaversite"
+handleInput('#input-live-link', '.live', 'live', false);
+
+
+$('#reset-btn').click(function(){
+  $('input').val('');
+});
+
+        });
+
+        function showAlert(message, type = 'error') {
+    const alertBox = document.getElementById('custom-alert');
+    const overlay = document.getElementById('overlay');
+    const msg = document.getElementById('alert-message');
+
+    msg.textContent = message;
+    alertBox.className = 'custom-alert ' + type;
+
+    alertBox.style.display = 'block';
+    overlay.style.display = 'block';
+  }
+
+  function hideAlert() {
+    document.getElementById('custom-alert').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+  }
+
+  document.getElementById('copy-btn').addEventListener('click', function () {
+    const text = document.getElementById('code-block').textContent;
+    const keywords = ['table_', 'local', 'live'];
+    const found = keywords.filter(word => text.includes(word));
+
+    if (found.length > 0) {
+      showAlert('Found in content: ' + found.join(', '), 'error');
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        showAlert('Copied to clipboard!', 'success');
+      }).catch(err => {
+        showAlert('Failed to copy: ' + err, 'error');
+      });
+    }
+  });
+      </script>
+</body>
+</html>
