@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Validator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d12;
+    --panel: #10141b;
+    --panel-raised: #151a23;
+    --line: #232a36;
+    --line-soft: #1a2029;
+    --text: #e7ebf1;
+    --text-dim: #8b96a8;
+    --text-faint: #566072;
+    --accent: #4fd1ff;
+    --accent-dim: #1c4a5c;
+    --ok: #3ddc84;
+    --ok-dim: #123a26;
+    --fail: #ff5c6c;
+    --fail-dim: #3a1418;
+    --warn: #ffb84d;
+    --warn-dim: #3a2b0e;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 800px 400px at 15% -10%, rgba(79,209,255,0.06), transparent),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:32px 20px 80px;
+  }
+  .wrap{max-width:1000px; margin:0 auto;}
+
+  .console-header{display:flex; align-items:baseline; gap:14px; margin-bottom:6px;}
+  .dot-row{display:flex; gap:6px;}
+  .dot-row span{width:9px;height:9px;border-radius:50%;background:var(--line);}
+  h1{
+    font-family:var(--mono); font-size:22px; font-weight:700; letter-spacing:-0.02em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .cursor{
+    display:inline-block; width:9px; height:18px; background:var(--accent);
+    animation:blink 1.1s step-end infinite; vertical-align:-3px;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  .subtitle{color:var(--text-dim); font-size:13.5px; margin:8px 0 26px; max-width:620px; line-height:1.6;}
+  .subtitle b{color:var(--text);}
+  .proxy-note{
+    font-family:var(--mono); font-size:11.5px; color:var(--text-faint);
+    background:var(--panel); border:1px solid var(--line-soft); border-radius:6px;
+    padding:10px 14px; margin-bottom:26px; line-height:1.7;
+  }
+  .proxy-note .tag{color:var(--warn); font-weight:600;}
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:20px;
+  }
+  .panel-label{
+    font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--text-faint); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;
+  }
+  textarea{
+    width:100%; min-height:150px; resize:vertical;
+    background:var(--bg); border:1px solid var(--line); border-radius:7px;
+    color:var(--text); font-family:var(--mono); font-size:13px; line-height:1.6;
+    padding:14px; outline:none;
+  }
+  textarea:focus{border-color:var(--accent-dim); box-shadow:0 0 0 3px rgba(79,209,255,0.08);}
+  textarea::placeholder{color:var(--text-faint);}
+
+  .controls-row{
+    display:flex; align-items:center; justify-content:space-between; margin-top:14px; gap:14px; flex-wrap:wrap;
+  }
+  .count-hint{font-family:var(--mono); font-size:12px; color:var(--text-faint);}
+
+  button{
+    font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer;
+    border-radius:7px; border:1px solid transparent; padding:10px 18px;
+    transition:transform .06s ease, background .15s ease, border-color .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent); color:#04141c; border-color:var(--accent);}
+  .btn-primary:hover{background:#6fdcff;}
+  .btn-primary:disabled{background:var(--line); color:var(--text-faint); cursor:not-allowed; transform:none;}
+  .btn-ghost{background:transparent; color:var(--text-dim); border-color:var(--line);}
+  .btn-ghost:hover{border-color:var(--accent-dim); color:var(--text);}
+  .btn-ghost:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .progress-wrap{display:none; margin-top:16px;}
+  .progress-wrap.active{display:block;}
+  .progress-meta{
+    display:flex; justify-content:space-between; font-family:var(--mono); font-size:11.5px;
+    color:var(--text-dim); margin-bottom:7px;
+  }
+  .progress-track{height:6px; background:var(--bg); border-radius:99px; overflow:hidden; border:1px solid var(--line);}
+  .progress-fill{
+    height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #6fdcff);
+    transition:width .25s ease; box-shadow:0 0 12px rgba(79,209,255,0.5);
+  }
+
+  .summary{display:none; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;}
+  .summary.active{display:grid;}
+  .sum-card{background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:14px 16px;}
+  .sum-card .num{font-family:var(--mono); font-size:24px; font-weight:700; line-height:1;}
+  .sum-card .lbl{font-size:11px; color:var(--text-faint); margin-top:6px; text-transform:uppercase; letter-spacing:0.05em;}
+  .sum-card.total .num{color:var(--text);}
+  .sum-card.ok .num{color:var(--ok);}
+  .sum-card.notfound .num{color:var(--fail);}
+  .sum-card.err .num{color:var(--warn);}
+
+  .results-panel{display:none;}
+  .results-panel.active{display:block;}
+  .results-toolbar{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px;
+  }
+  .filters{display:flex; gap:6px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:4px;}
+  .filter-btn{
+    font-family:var(--mono); font-size:12px; padding:7px 14px; border-radius:6px; border:none;
+    background:transparent; color:var(--text-dim); font-weight:500;
+  }
+  .filter-btn.active{background:var(--line-soft); color:var(--text);}
+  .filter-btn .fc{color:var(--text-faint); margin-left:4px;}
+  .actions{display:flex; gap:8px;}
+
+  .table-scroll{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--text-faint); padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel-raised);
+    font-weight:600;
+  }
+  tbody tr{border-bottom:1px solid var(--line-soft);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,0.015);}
+  td{padding:12px 16px; vertical-align:top;}
+  .url-cell{
+    font-family:var(--mono); font-size:12px; color:var(--text-dim);
+    max-width:440px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .url-cell a{color:inherit; text-decoration:none;}
+  .url-cell a:hover{color:var(--accent); text-decoration:underline;}
+  .status-code{font-family:var(--mono); font-weight:600; font-size:13px;}
+  .status-2xx{color:var(--ok);}
+  .status-3xx{color:var(--accent);}
+  .status-4xx{color:var(--warn);}
+  .status-5xx{color:var(--fail);}
+  .status-na{color:var(--text-faint);}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+    font-weight:600; padding:5px 10px; border-radius:99px; white-space:nowrap;
+  }
+  .badge.ok{background:var(--ok-dim); color:var(--ok); border:1px solid rgba(61,220,132,0.25);}
+  .badge.notfound{background:var(--fail-dim); color:var(--fail); border:1px solid rgba(255,92,108,0.25);}
+  .badge.httperr{background:var(--warn-dim); color:var(--warn); border:1px solid rgba(255,184,77,0.25);}
+  .badge.pending{background:var(--line-soft); color:var(--text-dim);}
+  .badge.err{background:var(--line-soft); color:var(--text-faint);}
+
+  .spin{
+    width:11px; height:11px; border-radius:50%; border:2px solid var(--line);
+    border-top-color:var(--accent); animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .empty-state{text-align:center; padding:60px 20px; color:var(--text-faint); font-family:var(--mono); font-size:13px;}
+
+  .row-retry{
+    margin-left:8px; background:none; border:none; color:var(--accent); font-family:var(--mono);
+    font-size:11px; cursor:pointer; padding:0; text-decoration:underline;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised); border:1px solid var(--line); color:var(--text);
+    padding:11px 20px; border-radius:8px; font-size:13px; font-family:var(--mono);
+    opacity:0; pointer-events:none; transition:all .25s ease; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:720px){
+    .summary{grid-template-columns:repeat(2,1fr);}
+    .url-cell{max-width:160px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="console-header"><div class="dot-row"><span></span><span></span><span></span></div></div>
+  <h1>link-validator<span class="cursor"></span></h1>
+  <p class="subtitle">
+    Paste a list of URLs and check which ones are <b>accessible</b>, <b>404 Not Found</b>, or returning
+    <b>another HTTP error</b>.
+  </p>
+
+  <div class="proxy-note">
+    <span class="tag">note</span> — browsers can't read a cross-origin status code directly (CORS).
+    This tool tries a direct request first, then falls back through independent public proxies (with a retry)
+    to read the real response. If every method agrees on a 403/429/503, that's flagged separately since those
+    codes usually mean a proxy got blocked, not that the link is dead — see the note above the table when it
+    happens. A row is only marked <b style="color:var(--text-dim);">Unable to verify</b> if nothing responds
+    at all — hover the badge to see why, or hit <b style="color:var(--text-dim);">retry</b> /
+    <b style="color:var(--text-dim);">Retry Failed</b>.
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">
+      <span>Input URLs</span>
+      <span class="count-hint" id="lineCount">0 lines</span>
+    </div>
+    <textarea id="urlInput" placeholder="https://example.com/page-one
+https://example.com/page-two
+https://example.com/maybe-broken-link"></textarea>
+
+    <div class="controls-row">
+      <div style="display:flex; gap:10px;">
+        <button class="btn-primary" id="runBtn">Run Validation</button>
+        <button class="btn-ghost" id="clearBtn">Clear</button>
+      </div>
+      <span class="count-hint" id="concurrencyHint">checks run 3 at a time</span>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-meta">
+        <span id="progressText">Checking 0 / 0…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="sum-card total"><div class="num" id="sumTotal">0</div><div class="lbl">Total</div></div>
+    <div class="sum-card ok"><div class="num" id="sumOk">0</div><div class="lbl">Accessible</div></div>
+    <div class="sum-card notfound"><div class="num" id="sumNotFound">0</div><div class="lbl">Not Found</div></div>
+    <div class="sum-card err"><div class="num" id="sumErr">0</div><div class="lbl">Error</div></div>
+  </div>
+
+  <div class="results-panel" id="resultsPanel">
+    <div class="proxy-note" id="ambiguousBanner" style="display:none; border-color:rgba(255,184,77,0.35); margin-bottom:14px;">
+      <span class="tag">ⓘ</span> <span class="abn-text"></span>
+    </div>
+    <div class="results-toolbar">
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="all">All <span class="fc" id="fcAll">0</span></button>
+        <button class="filter-btn" data-filter="accessible">Accessible <span class="fc" id="fcAccessible">0</span></button>
+        <button class="filter-btn" data-filter="notfound">Not Found <span class="fc" id="fcNotFound">0</span></button>
+      </div>
+      <div class="actions">
+        <button class="btn-ghost" id="retryFailedBtn">Retry Failed</button>
+        <button class="btn-ghost" id="copyBtn">Copy Results</button>
+        <button class="btn-ghost" id="exportBtn">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:56%;">URL</th>
+            <th style="width:16%;">Status Code</th>
+            <th style="width:28%;">Result</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">No results match this filter.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const urlInput = document.getElementById('urlInput');
+const runBtn = document.getElementById('runBtn');
+const clearBtn = document.getElementById('clearBtn');
+const lineCount = document.getElementById('lineCount');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const progressPct = document.getElementById('progressPct');
+const summary = document.getElementById('summary');
+const resultsPanel = document.getElementById('resultsPanel');
+const resultsBody = document.getElementById('resultsBody');
+const emptyState = document.getElementById('emptyState');
+const toast = document.getElementById('toast');
+
+let results = [];
+let currentFilter = 'all';
+
+urlInput.addEventListener('input', () => {
+  const n = urlInput.value.split('\n').map(l => l.trim()).filter(Boolean).length;
+  lineCount.textContent = n + (n === 1 ? ' line' : ' lines');
+});
+
+clearBtn.addEventListener('click', () => {
+  urlInput.value = '';
+  lineCount.textContent = '0 lines';
+  results = [];
+  resultsPanel.classList.remove('active');
+  summary.classList.remove('active');
+  progressWrap.classList.remove('active');
+});
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.filter;
+  renderTable();
+});
+
+function classify(httpCode) {
+  if (!httpCode) {
+    return { key: 'err', badge: 'err', label: '⚠️ Unable to Verify' };
+  }
+  if (httpCode === 404) {
+    return { key: 'notfound', badge: 'notfound', label: '❌ Not Found' };
+  }
+  if (httpCode >= 400) {
+    return { key: 'httperr', badge: 'httperr', label: `⚠️ HTTP Error (${httpCode})` };
+  }
+  if (httpCode >= 200 && httpCode < 400) {
+    return { key: 'ok', badge: 'ok', label: '✅ Accessible' };
+  }
+  return { key: 'err', badge: 'err', label: '⚠️ Unable to Verify' };
+}
+
+function withTimeout(ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(timer) };
+}
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Strategy 1: direct browser fetch — works when the target sends permissive
+// CORS headers. No proxy dependency, tried first, most trustworthy result.
+async function tryDirect(url) {
+  const t = withTimeout(12000);
+  try {
+    const res = await fetch(url, { mode: 'cors', redirect: 'follow', signal: t.signal });
+    return { httpCode: res.status, via: 'direct' };
+  } finally { t.clear(); }
+}
+
+// Strategy 2: allorigins /get — reads the real status code server-side.
+async function tryAllOrigins(url, timeoutMs) {
+  const t = withTimeout(timeoutMs);
+  try {
+    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url) + '&_=' + Date.now();
+    const res = await fetch(proxy, { signal: t.signal });
+    if (!res.ok) throw new Error('allorigins_http_' + res.status);
+    const data = await res.json();
+    const httpCode = data && data.status ? data.status.http_code : null;
+    if (!httpCode) throw new Error('allorigins_no_status');
+    return { httpCode, via: 'allorigins' };
+  } finally { t.clear(); }
+}
+
+// Strategy 3: codetabs as a last-resort fallback. (corsproxy.io was removed —
+// it now restricts free usage to a fixed allow-list of dev origins like
+// localhost/CodeSandbox/StackBlitz and returns 403 for everyone else,
+// which was being misread as the *target* site returning 403.)
+async function tryCodeTabs(url) {
+  const t = withTimeout(14000);
+  try {
+    const proxy = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url);
+    const res = await fetch(proxy, { signal: t.signal, redirect: 'follow' });
+    return { httpCode: res.status, via: 'codetabs' };
+  } finally { t.clear(); }
+}
+
+// Codes that are frequently produced by a PROXY being blocked/rate-limited
+// rather than the actual target link being broken (bot-protection, WAFs,
+// and per-origin allow-lists all tend to answer with these).
+const AMBIGUOUS_CODES = new Set([403, 429, 503]);
+
+async function checkOne(original) {
+  const attempts = [
+    { fn: () => tryDirect(original), name: 'direct' },
+    { fn: () => tryAllOrigins(original, 18000), name: 'allorigins' },
+    { fn: () => delay(600).then(() => tryAllOrigins(original, 18000)), name: 'allorigins-retry' },
+    { fn: () => tryCodeTabs(original), name: 'codetabs' }
+  ];
+
+  let ambiguousCandidate = null;
+  let lastErrLabel = 'network_error';
+
+  for (const attempt of attempts) {
+    try {
+      const r = await attempt.fn();
+      if (r.httpCode && AMBIGUOUS_CODES.has(r.httpCode)) {
+        // Don't trust a single proxy's word for this — keep it as a
+        // fallback candidate and see if another method gets a clean read.
+        if (!ambiguousCandidate) ambiguousCandidate = r;
+        continue;
+      }
+      if (r.httpCode) {
+        const cls = classify(r.httpCode);
+        return { original, httpCode: r.httpCode, via: r.via, ...cls };
+      }
+    } catch (err) {
+      lastErrLabel = (err && err.name === 'AbortError') ? 'timed out' : 'proxy unreachable';
+      continue;
+    }
+  }
+
+  if (ambiguousCandidate) {
+    const cls = classify(ambiguousCandidate.httpCode);
+    return {
+      original, httpCode: ambiguousCandidate.httpCode, via: ambiguousCandidate.via,
+      ...cls,
+      note: `Every method that got a response saw HTTP ${ambiguousCandidate.httpCode} on this URL. That code is commonly returned when a site's bot-protection or rate-limiting blocks automated/proxy traffic — it doesn't necessarily mean the link itself is broken. Open it directly in a browser tab to confirm before treating it as dead.`
+    };
+  }
+
+  return {
+    original, httpCode: null,
+    key: 'err', badge: 'err', label: '⚠️ Unable to Verify',
+    errDetail: lastErrLabel
+  };
+}
+
+async function runWithConcurrency(items, limit, onEach, onProgress) {
+  let idx = 0, done = 0;
+  const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
+    while (idx < items.length) {
+      const myIdx = idx++;
+      let result;
+      try {
+        result = await checkOne(items[myIdx]);
+      } catch (e) {
+        // Safety net: a single URL should never be able to halt the whole run.
+        result = {
+          original: items[myIdx], httpCode: null,
+          key: 'err', badge: 'err', label: '⚠️ Unable to Verify',
+          errDetail: 'unexpected error'
+        };
+      }
+      onEach(myIdx, result);
+      done++;
+      onProgress(done, items.length);
+    }
+  });
+  await Promise.all(workers);
+}
+
+runBtn.addEventListener('click', async () => {
+  const lines = urlInput.value.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    showToast('Paste at least one URL first');
+    return;
+  }
+
+  results = lines.map(url => ({ original: url, httpCode: null, key: 'pending', badge: 'pending', label: 'Checking…' }));
+
+  runBtn.disabled = true;
+  runBtn.textContent = 'Validating…';
+  progressWrap.classList.add('active');
+  resultsPanel.classList.add('active');
+  summary.classList.add('active');
+  renderTable();
+  updateSummary();
+
+  await runWithConcurrency(lines, 3, (i, res) => {
+    results[i] = res;
+    renderTable();
+    updateSummary();
+  }, (done, total) => {
+    const pct = Math.round((done / total) * 100);
+    progressFill.style.width = pct + '%';
+    progressText.textContent = `Checking ${done} / ${total}…`;
+    progressPct.textContent = pct + '%';
+  });
+
+  progressText.textContent = `Done — ${lines.length} / ${lines.length} checked`;
+  runBtn.disabled = false;
+  runBtn.textContent = 'Run Validation';
+});
+
+function statusClass(code) {
+  if (!code) return 'status-na';
+  if (code >= 200 && code < 300) return 'status-2xx';
+  if (code >= 300 && code < 400) return 'status-3xx';
+  if (code >= 400 && code < 500) return 'status-4xx';
+  if (code >= 500) return 'status-5xx';
+  return 'status-na';
+}
+
+function matchesFilter(r) {
+  if (currentFilter === 'all') return true;
+  if (currentFilter === 'accessible') return r.key === 'ok';
+  if (currentFilter === 'notfound') return r.key === 'notfound';
+  return true;
+}
+
+function renderTable() {
+  const filtered = results.filter(matchesFilter);
+  resultsBody.innerHTML = '';
+  emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+
+  filtered.forEach(r => {
+    const tr = document.createElement('tr');
+
+    const tdUrl = document.createElement('td');
+    tdUrl.className = 'url-cell';
+    tdUrl.title = r.original;
+    tdUrl.innerHTML = `<a href="${escapeAttr(r.original)}" target="_blank" rel="noopener">${escapeHtml(r.original)}</a>`;
+
+    const tdStatus = document.createElement('td');
+    if (r.key === 'pending') {
+      tdStatus.innerHTML = '<span class="spin"></span>';
+    } else {
+      const span = document.createElement('span');
+      span.className = 'status-code ' + statusClass(r.httpCode);
+      span.textContent = r.httpCode ? r.httpCode : '—';
+      tdStatus.appendChild(span);
+    }
+
+    const tdResult = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + r.badge;
+    badge.textContent = r.label;
+    if (r.note) badge.title = r.note;
+    else if (r.errDetail) badge.title = 'Reason: ' + r.errDetail;
+    else if (r.via) badge.title = 'Verified via: ' + r.via;
+    tdResult.appendChild(badge);
+
+    if (r.note) {
+      const hint = document.createElement('div');
+      hint.textContent = 'possible proxy/bot block — verify manually';
+      hint.style.cssText = 'font-family:var(--mono); font-size:10.5px; color:var(--text-faint); margin-top:5px;';
+      hint.title = r.note;
+      tdResult.appendChild(hint);
+    }
+
+    if (r.key === 'err') {
+      const retryLink = document.createElement('button');
+      retryLink.textContent = 'retry';
+      retryLink.className = 'row-retry';
+      retryLink.addEventListener('click', () => retryOne(r));
+      tdResult.appendChild(retryLink);
+    }
+
+    tr.append(tdUrl, tdStatus, tdResult);
+    resultsBody.appendChild(tr);
+  });
+
+  document.getElementById('fcAll').textContent = results.length;
+  document.getElementById('fcAccessible').textContent = results.filter(r => r.key === 'ok').length;
+  document.getElementById('fcNotFound').textContent = results.filter(r => r.key === 'notfound').length;
+
+  const ambiguousCount = results.filter(r => r.note).length;
+  const banner = document.getElementById('ambiguousBanner');
+  if (ambiguousCount > 0) {
+    banner.style.display = 'block';
+    banner.querySelector('.abn-text').textContent =
+      `${ambiguousCount} link${ambiguousCount === 1 ? '' : 's'} came back with a status (403/429/503) that every available checking method agreed on but that commonly signals a proxy or bot-protection block rather than a truly dead link. Open those links directly in a browser tab to confirm, or hit "retry" — Retry Failed only re-runs rows marked Unable to Verify, so recheck these manually if needed.`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function updateSummary() {
+  document.getElementById('sumTotal').textContent = results.length;
+  document.getElementById('sumOk').textContent = results.filter(r => r.key === 'ok').length;
+  document.getElementById('sumNotFound').textContent = results.filter(r => r.key === 'notfound').length;
+  document.getElementById('sumErr').textContent = results.filter(r => r.key === 'httperr' || r.key === 'err').length;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+function escapeAttr(str) {
+  return String(str).replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+async function retryOne(r) {
+  const idx = results.indexOf(r);
+  if (idx === -1) return;
+  results[idx] = { ...results[idx], key: 'pending', badge: 'pending', label: 'Checking…' };
+  renderTable();
+  const fresh = await checkOne(r.original);
+  results[idx] = fresh;
+  renderTable();
+  updateSummary();
+}
+
+document.getElementById('retryFailedBtn').addEventListener('click', async () => {
+  const failedIdx = results.map((r, i) => ((r.key === 'err' || r.note) ? i : -1)).filter(i => i >= 0);
+  if (failedIdx.length === 0) { showToast('No failed rows to retry'); return; }
+  showToast(`Retrying ${failedIdx.length} row(s)…`);
+  failedIdx.forEach(i => { results[i] = { ...results[i], key: 'pending', badge: 'pending', label: 'Checking…' }; });
+  renderTable();
+  await runWithConcurrency(
+    failedIdx.map(i => results[i].original),
+    3,
+    (localIdx, res) => { results[failedIdx[localIdx]] = res; renderTable(); },
+    () => {}
+  );
+  updateSummary();
+  showToast('Retry complete');
+});
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const filtered = results.filter(matchesFilter);
+  if (filtered.length === 0) { showToast('Nothing to copy'); return; }
+  const header = ['URL', 'Status Code', 'Result'].join('\t');
+  const rows = filtered.map(r => [r.original, r.httpCode || 'N/A', r.label + (r.note ? ' (possible proxy/bot block — verify manually)' : '')].join('\t'));
+  const text = [header, ...rows].join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Results copied to clipboard');
+  }).catch(() => {
+    showToast('Copy failed — try selecting manually');
+  });
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const filtered = results.filter(matchesFilter);
+  if (filtered.length === 0) { showToast('Nothing to export'); return; }
+  const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const header = ['URL', 'Status Code', 'Result'].map(esc).join(',');
+  const rows = filtered.map(r => [r.original, r.httpCode || 'N/A', r.label + (r.note ? ' (possible proxy/bot block — verify manually)' : '')].map(esc).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'link-validation-results.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('CSV exported');
+});
+</script>
+</body>
+</html>
