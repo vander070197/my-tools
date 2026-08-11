@@ -7,10 +7,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-      form {margin:50px auto 0; padding:30px; box-shadow:rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; max-width:80%;}
+      body { background:#f4f6f9; }
+      form {margin:30px auto 0; padding:20px 25px; box-shadow:rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; max-width:960px; border-radius:8px; background:#fff;}
       form label {margin:0 0 10px;}
-      .card { max-width: 80%; margin: 50px auto 0; box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; }
+      .card { max-width: 960px; margin: 24px auto 40px; box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; border-radius:8px; }
       .error_input{   box-shadow: 0 0 0 .25rem rgba(220, 53, 69, .25);border-color: #dc3545;}
+      pre#code-block { overflow-x: auto; }
+      #code-block { font-size: 0.9rem; }
 
       .overlay {display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0, 0, 0, 0.5); z-index:9998;}
 .custom-alert.error {background-color:#df727d;}
@@ -19,10 +22,13 @@
 
 
 .custom-alert .close-btn {position:absolute; top:-18px; right:-13px; font-size:43px; color:#555; cursor:pointer; font-weight:bold; background:#fff; border-radius:50px; line-height:39px; height:50px; display:block; width:50px; text-align:center;}
-.custom-alert {display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); min-width:300px; max-width:500px;  padding:50px 25px; border-radius:8px; box-shadow:0 4px 12px rgba(0, 0, 0, 0.25); z-index:9999; color:#fff;}
+.custom-alert {display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; min-width:260px; max-width:500px;  padding:40px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0, 0, 0, 0.25); z-index:9999; color:#fff;}
 .custom-alert p {margin:0; font-size:16px; line-height:1.4; font-weight:600;}
-.custom-alert .close-btn {position:absolute; top:-18px; right:-13px; font-size:43px; color:#555; cursor:pointer; font-weight:bold; background:#fff; border-radius:50px; line-height:39px; height:50px; display:block; width:50px; text-align:center;}
 
+@media (max-width: 576px) {
+  form { padding: 16px; }
+  form .row.g-0, form > .container > .row { row-gap: 12px; }
+}
     </style>
 </head>
 <body>
@@ -35,11 +41,11 @@
 </div>
 
     <form action="#" method="POST" id="" class="">
-        <div class="container">
+        <div class="container-fluid px-0">
           <div class="row">
-            <div class="col">
-              <div class="row" >
-                <div class="col">
+            <div class="col-12">
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
                   <div class="form-group" >
                     <label>
                       <b>Table Prefix</b>
@@ -47,7 +53,7 @@
                     <input type="text" class="form-control required" placeholder="Enter table prefix" required="required" id="input-table-prefix">
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-12 col-md-4">
                   <div class="form-group" >
                     <label>
                       <b>Local Link</b>
@@ -55,7 +61,7 @@
                     <input type="text" class="form-control required input-link" placeholder="Enter local link" required="required" id="input-local-link">
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-12 col-md-4">
                   <div class="form-group" >
                     <label>
                       <b id="">Live Link</b>
@@ -79,16 +85,40 @@ UPDATE <span class="db-table">table</span>_posts SET guid = REPLACE(guid, '<span
 UPDATE <span class="db-table">table</span>_yoast_seo_links SET url = REPLACE(url, '<span class="local">local</span>', '<span class="live">live</span>');
 UPDATE <span class="db-table">table</span>_yoast_indexable SET open_graph_image = REPLACE(open_graph_image, '<span class="local">local</span>', '<span class="live">live</span>');
 UPDATE <span class="db-table">table</span>_yoast_indexable SET twitter_image = REPLACE(twitter_image, '<span class="local">local</span>', '<span class="live">live</span>');
-UPDATE <span class="db-table">table</span>_yoast_indexable SET open_graph_image_meta = REPLACE(open_graph_image_meta, '<span class="local">local</span>', '<span class="live">live</span>');</code></pre>
-UPDATE <span class="db-table">table</span>_options SET option_value = REPLACE(option_value, '<span class="local">local</span>', '<span class="live">live</span>');
-        <button type="button" class="btn btn-primary" id="copy-btn">Copy</button>
-        <button type="button" class="btn btn-dark" id="reset-btn">Reset</button>
+UPDATE <span class="db-table">table</span>_yoast_indexable SET open_graph_image_meta = REPLACE(open_graph_image_meta, '<span class="local">local</span>', '<span class="live">live</span>');
+UPDATE <span class="db-table">table</span>_options SET option_value = REPLACE(option_value, '<span class="local">local</span>', '<span class="live">live</span>');</code></pre>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button type="button" class="btn btn-primary" id="copy-btn">Copy</button>
+          <button type="button" class="btn btn-outline-danger" id="reset-btn">Reset</button>
+        </div>
         </div>
       </div>
 
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
       <script>
         $(document).ready(function() {
+          const STORAGE_KEY = 'tool_pdqa-db-replace_data';
+
+          function saveState() {
+            const state = {
+              tablePrefix: $('#input-table-prefix').val(),
+              localLink: $('#input-local-link').val(),
+              liveLink: $('#input-live-link').val()
+            };
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+            catch (e) { console.error('Could not save data:', e); }
+          }
+
+          function loadState() {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+            catch (e) { saved = null; }
+            if (!saved) return;
+            if (typeof saved.tablePrefix === 'string') $('#input-table-prefix').val(saved.tablePrefix).trigger('input');
+            if (typeof saved.localLink === 'string') $('#input-local-link').val(saved.localLink).trigger('input');
+            if (typeof saved.liveLink === 'string') $('#input-live-link').val(saved.liveLink).trigger('input');
+          }
+
           $('#input-table-prefix').on('input', function() {
   let cleanVal = $(this).val().replace(/[^a-zA-Z0-9]/g, '');
   $(this).val(cleanVal); // Update input with cleaned value
@@ -96,6 +126,7 @@ UPDATE <span class="db-table">table</span>_options SET option_value = REPLACE(op
   // If input is empty, show placeholder text
   let displayVal = cleanVal || 'table';
   $('span.db-table').text(displayVal);
+  saveState();
 });
 
 function handleInput(selector, target, placeholder = 'placeholder', mustInclude = true) {
@@ -120,6 +151,7 @@ if (isValid) {
   $(target).text(placeholder); // Prevent updating with invalid
 }
 
+  saveState();
   });
 }
 
@@ -131,8 +163,16 @@ handleInput('#input-live-link', '.live', 'live', false);
 
 
 $('#reset-btn').click(function(){
+  if (!confirm('Reset this tab\'s saved data? This cannot be undone.')) return;
   $('input').val('');
+  $('span.db-table').text('table');
+  $('span.local').text('local');
+  $('span.live').text('live');
+  $('#input-local-link, #input-live-link, #input-table-prefix').removeClass('error_input');
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
 });
+
+loadState();
 
         });
 

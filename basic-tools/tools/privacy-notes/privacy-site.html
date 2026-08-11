@@ -107,6 +107,21 @@
     .code-grid{grid-template-columns:1fr;}
   }
 
+  @media (max-width:640px){
+    .shell{ width:100%; padding:20px 14px 48px; }
+    .sidenav{ flex:0 0 52px; width:52px; }
+    .nav-btn{ width:36px; height:36px; }
+    .nav-btn svg{ width:17px; height:17px; }
+    .page-head{ margin-bottom:22px; padding-bottom:16px; }
+    .page-head h1{ font-size:21px; }
+    .page-head p{ max-width:100%; font-size:13.5px; }
+    .panel-body{ padding:16px; }
+    .panel-head{ padding:12px 14px; flex-wrap:wrap; gap:8px; }
+    .preview-surface{ padding:16px; }
+    .actions-row{ justify-content:stretch; }
+    .actions-row .btn{ width:100%; justify-content:center; }
+  }
+
   .panel.highlight{
     border-color:var(--accent);
     box-shadow:0 0 0 3px var(--accent-soft);
@@ -613,6 +628,8 @@
   const companyInput = document.getElementById("companyInput");
   const outputCode = document.getElementById("outputCode");
 
+  const STORAGE_KEY = 'tool_privacy-do-not-sell_data';
+
   // ---------- Built-in Do Not Sell / Share template ----------
   const originalTemplate = `<!-- wp:html -->
 <p><span class="comp_name">[Company Name]</span> respects your privacy. We do not sell your personal information for money. Some limited information may be shared with service providers (such as analytics tools or advertising platforms), which may use it for analytics or cross-context behavioral advertising (for example, showing ads across different websites). California residents have the right to opt out of this sharing at any time.</p>
@@ -708,6 +725,7 @@
     return {
       getValues: () => values,
       reset: () => { values = []; input.value = ""; render(); },
+      restore: (vals) => { values = Array.isArray(vals) ? vals.slice() : []; render(); },
       onChangeCallback: (fn) => { onChange = fn; }
     };
   }
@@ -724,8 +742,36 @@
     validate: (v) => v.replace(/\D/g, "").length >= 7
   });
 
-  emailTags.onChangeCallback(updateTemplate);
-  phoneTags.onChangeCallback(updateTemplate);
+  emailTags.onChangeCallback(() => { updateTemplate(); saveState(); });
+  phoneTags.onChangeCallback(() => { updateTemplate(); saveState(); });
+
+  // ---------- Persistence ----------
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        company: companyInput.value,
+        emails: emailTags.getValues(),
+        phones: phoneTags.getValues(),
+        codeHtml: document.getElementById("outputCodeHtml").value,
+        codeCss: document.getElementById("outputCodeCss").value
+      }));
+    } catch (e) { console.error('Could not save data:', e); }
+  }
+
+  function loadState() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+    catch (e) { saved = null; }
+    if (!saved) return;
+
+    if (typeof saved.company === 'string') companyInput.value = saved.company;
+
+    if (Array.isArray(saved.emails)) emailTags.restore(saved.emails);
+    if (Array.isArray(saved.phones)) phoneTags.restore(saved.phones);
+
+    if (typeof saved.codeHtml === 'string') document.getElementById("outputCodeHtml").value = saved.codeHtml;
+    if (typeof saved.codeCss === 'string') document.getElementById("outputCodeCss").value = saved.codeCss;
+  }
 
   // ---------- Copy helper ----------
   function copyToClipboard(text, btn) {
@@ -860,29 +906,42 @@
   companyInput.addEventListener("input", function () {
     this.value = this.value.replace(/^\s+/, "");
     updateTemplate();
+    saveState();
   });
   companyInput.addEventListener("blur", function () {
     this.value = this.value.trim();
+    saveState();
   });
 
   document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Reset this tab's saved data? This cannot be undone.")) return;
     companyInput.value = "";
     emailTags.reset();
     phoneTags.reset();
     updateTemplate();
+    document.getElementById("outputCodeHtml").value = defaultCodeTabHtml;
+    document.getElementById("outputCodeCss").value = defaultCodeTabCss;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   });
 
   updateTemplate();
 
   // ---------- Code tab: independent starter content ----------
   // Seeded once on load with a static, editable copy — never touched by Home's updateTemplate().
-  const codeTabHtml = `<span class="dns"><a href="/COMPANY_NAME-do-not-sell-or-share-my-personal-information">Do Not Sell/Share My Personal Information</a></span>`;
-  document.getElementById("outputCodeHtml").value = codeTabHtml;
+  const defaultCodeTabHtml = `<span class="dns"><a href="/COMPANY_NAME-do-not-sell-or-share-my-personal-information">Do Not Sell/Share My Personal Information</a></span>`;
+  document.getElementById("outputCodeHtml").value = defaultCodeTabHtml;
 
-  const codeTabCss = `.privacy_list h2 { font-weight:600; font-size:25px; line-height:100%; margin: 30px auto 20px; display: inline-block;}
+  const defaultCodeTabCss = `.privacy_list h2 { font-weight:600; font-size:25px; line-height:100%; margin: 30px auto 20px; display: inline-block;}
 main a[href^="tel:"]:hover mark{text-decoration:underline;}
 .privacy_list h3{font-weight: 600; font-size: 20px;margin-bottom:15px;}`;
-  document.getElementById("outputCodeCss").value = codeTabCss;
+  document.getElementById("outputCodeCss").value = defaultCodeTabCss;
+
+  document.getElementById("outputCodeHtml").addEventListener("input", saveState);
+  document.getElementById("outputCodeCss").addEventListener("input", saveState);
+
+  // Restore any previously saved data (overrides the defaults above)
+  loadState();
+  updateTemplate();
 
   // ---------- Sidenav tab switching ----------
   const navButtons = document.querySelectorAll(".nav-btn");

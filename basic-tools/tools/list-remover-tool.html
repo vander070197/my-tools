@@ -2,29 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>List Remover Tool</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    body { background: #f4f6f9; }
     textarea {
       height: 180px;
     }
+    #result { background: #fff; }
+    .result-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
   </style>
 </head>
-<body class="bg-light p-4">
+<body class="p-3 p-md-4">
 
-<div class="container">
-  <h3 class="mb-4 text-center fw-bold">List Remover Tool</h3>
+<div class="container" style="max-width: 960px;">
+  <h3 class="mb-4 text-center fw-bold h4">List Remover Tool</h3>
 
   <div class="row g-4">
 
     <!-- Listed Base -->
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
       <label class="form-label fw-semibold">Listed Base (Items to Remove)</label>
       <textarea id="baseList" class="form-control" placeholder="Enter items, one per line..."></textarea>
     </div>
 
     <!-- Full List -->
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
       <label class="form-label fw-semibold">Full Listed</label>
       <textarea id="fullList" class="form-control" placeholder="Enter full list here..."></textarea>
     </div>
@@ -32,21 +42,51 @@
   </div>
 
   <!-- Buttons -->
-  <div class="mt-4 d-flex gap-3">
+  <div class="mt-4 d-flex flex-wrap gap-2">
     <button class="btn btn-primary" onclick="removeItems()">Remove Items</button>
     <button class="btn btn-success" onclick="copyResult()">Copy Result</button>
-    <button class="btn btn-secondary" onclick="resetAll()">Reset</button>
+    <button class="btn btn-outline-danger" onclick="resetAll()">Reset</button>
   </div>
 
   <!-- Result -->
   <div class="mt-4">
-    <label class="form-label fw-semibold">Result</label>
-    <textarea id="result" class="form-control" readonly></textarea>
+    <div class="result-label-row">
+      <label class="form-label fw-semibold mb-1">Result</label>
+      <span class="text-muted small" id="resultCount"></span>
+    </div>
+    <textarea id="result" class="form-control" readonly placeholder="Filtered list will appear here after you click Remove Items."></textarea>
   </div>
 </div>
 
 
 <script>
+const STORAGE_KEY = 'tool_list-remover-tool_data';
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      baseList: document.getElementById("baseList").value,
+      fullList: document.getElementById("fullList").value,
+      result: document.getElementById("result").value
+    }));
+  } catch (e) { console.error('Could not save data:', e); }
+}
+
+function loadState() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+  catch (e) { saved = null; }
+  if (!saved) return;
+  if (typeof saved.baseList === 'string') document.getElementById("baseList").value = saved.baseList;
+  if (typeof saved.fullList === 'string') document.getElementById("fullList").value = saved.fullList;
+  if (typeof saved.result === 'string') {
+    document.getElementById("result").value = saved.result;
+    const items = saved.result.split("\n").filter(i => i.trim() !== "");
+    document.getElementById("resultCount").textContent =
+      items.length ? `${items.length} item${items.length === 1 ? '' : 's'} remaining` : '';
+  }
+}
+
 function removeItems() {
   const base = document.getElementById("baseList").value
     .split("\n")
@@ -62,19 +102,50 @@ function removeItems() {
   const filtered = full.filter(item => !base.includes(item));
 
   document.getElementById("result").value = filtered.join("\n");
+  document.getElementById("resultCount").textContent =
+    filtered.length ? `${filtered.length} item${filtered.length === 1 ? '' : 's'} remaining` : '';
+  saveState();
 }
 
 function copyResult() {
   const result = document.getElementById("result");
-  result.select();
-  document.execCommand("copy");
+  if (!result.value.trim()) {
+    alert("Nothing to copy yet — run Remove Items first.");
+    return;
+  }
+  const finish = (ok) => {
+    const btn = document.querySelector('button[onclick="copyResult()"]');
+    if (!btn) return;
+    const original = btn.textContent;
+    btn.textContent = ok ? "Copied!" : "Copy failed";
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(result.value).then(() => finish(true), () => finish(false));
+  } else {
+    result.select();
+    try {
+      document.execCommand("copy");
+      finish(true);
+    } catch (e) {
+      finish(false);
+    }
+  }
 }
 
 function resetAll() {
+  if (!confirm("Reset this tab's saved data? This cannot be undone.")) return;
   document.getElementById("baseList").value = "";
   document.getElementById("fullList").value = "";
   document.getElementById("result").value = "";
+  document.getElementById("resultCount").textContent = "";
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
 }
+
+document.getElementById("baseList").addEventListener("input", saveState);
+document.getElementById("fullList").addEventListener("input", saveState);
+
+loadState();
 </script>
 
 </body>

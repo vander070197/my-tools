@@ -207,22 +207,58 @@
     .sidebar::-webkit-scrollbar-track { background: transparent; }
     .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
+    .sidebar-backdrop {
+      display: none;
+    }
+
     /* ── Mobile ── */
     @media (max-width: 640px) {
-      .sidebar { width: 52px; min-width: 52px; }
+      .sidebar { width: 0; min-width: 0; border-right: none; overflow: hidden; }
       .sidebar .nav-label, .sidebar .section-label, .sidebar .sidebar-title { display: none; }
       .sidebar .nav-btn { justify-content: center; padding: 10px 0; }
-      .sidebar.mobile-open { width: 220px; min-width: 220px; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+      .sidebar.mobile-open {
+        width: 240px; min-width: 240px; overflow-y: auto;
+        position: fixed; top: 0; left: 0; height: 100vh; z-index: 101;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+      }
       .sidebar.mobile-open .nav-label,
       .sidebar.mobile-open .section-label,
       .sidebar.mobile-open .sidebar-title { display: block; }
-      .sidebar.mobile-open .nav-btn { justify-content: flex-start; padding: 8px 14px; }
+      .sidebar.mobile-open .nav-btn { justify-content: flex-start; padding: 10px 14px; }
+
+      .sidebar-backdrop.show {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 100;
+      }
+
+      .topbar { padding: 10px 12px; }
+      .topbar-title { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .topbar-badge { display: none; }
+      .content { padding: 8px; }
+      .mobile-menu-btn { display: flex !important; }
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-1);
+      cursor: pointer;
+      padding: 4px;
+      align-items: center;
+      flex-shrink: 0;
     }
   </style>
 </head>
 <body>
 
 <div class="layout">
+
+  <!-- Mobile overlay backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
 
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar" aria-label="Tool navigation">
@@ -351,6 +387,9 @@
   <!-- Main Content -->
   <div class="main">
     <div class="topbar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" title="Open menu" aria-label="Open tool menu">
+        <i class="ti ti-menu-2" style="font-size:20px"></i>
+      </button>
       <i class="ti ti-users" id="topbar-icon" style="font-size:16px; color:var(--accent)" aria-hidden="true"></i>
       <span class="topbar-title" id="topbar-title">PDQA Dev Attendance</span>
       <span class="topbar-badge" id="topbar-badge">Attendance</span>
@@ -375,7 +414,9 @@
   const topbarIcon  = document.getElementById('topbar-icon');
   const sidebar     = document.getElementById('sidebar');
   const toggleIcon  = document.getElementById('toggle-icon');
+  const backdrop    = document.getElementById('sidebar-backdrop');
   let collapsed = false;
+  const isMobile = () => window.innerWidth <= 640;
 
   function loadTool(btn) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -390,14 +431,21 @@
     topbarBadge.textContent = badge;
     topbarIcon.className = `ti ti-${icon}`;
 
-    frame.src = src;
+    // Avoid a needless reload if the same tool is clicked again
+    if (!frame.src.endsWith(src)) {
+      frame.src = src;
+    }
 
-    if (window.innerWidth <= 640) {
-      sidebar.classList.remove('mobile-open');
+    if (isMobile()) {
+      closeMobileSidebar();
     }
   }
 
   function toggleSidebar() {
+    if (isMobile()) {
+      toggleMobileSidebar();
+      return;
+    }
     collapsed = !collapsed;
     sidebar.classList.toggle('collapsed', collapsed);
     toggleIcon.className = collapsed
@@ -405,6 +453,29 @@
       : 'ti ti-layout-sidebar-left-collapse';
     toggleIcon.style.fontSize = '18px';
   }
+
+  function toggleMobileSidebar() {
+    const open = sidebar.classList.toggle('mobile-open');
+    backdrop.classList.toggle('show', open);
+  }
+
+  function closeMobileSidebar() {
+    sidebar.classList.remove('mobile-open');
+    backdrop.classList.remove('show');
+  }
+
+  // Close mobile sidebar with Escape, and keep layout sane on resize
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobileSidebar();
+  });
+  window.addEventListener('resize', () => {
+    if (!isMobile()) closeMobileSidebar();
+  });
+
+  // Give every nav button a tooltip (useful when the sidebar is collapsed)
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    if (!btn.title) btn.title = btn.dataset.title || btn.textContent.trim();
+  });
 </script>
 
 </body>

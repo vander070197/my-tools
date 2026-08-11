@@ -26,16 +26,23 @@
       left: -9999px;
       top: -9999px;
     }
+    #output { min-height: 60px; }
+    #output:empty::after {
+      content: "Converted, clickable text will appear here.";
+      color: #9aa1ac;
+      font-style: italic;
+    }
   </style>
 </head>
-<body class="p-4">
-  <div class="container">
+<body class="p-3 p-md-4">
+  <div class="container" style="max-width: 900px;">
     <h5 class="mb-3">Text to Link Converter</h5>
     <textarea id="textInput" class="form-control mb-3" rows="6" placeholder="Enter your plain text with URLs..."></textarea>
 
-    <div class="d-flex gap-2 mb-3">
+    <div class="d-flex flex-wrap gap-2 mb-3">
       <button class="btn btn-primary" onclick="convertToLinks()">Convert to Clickable Links</button>
       <button class="btn btn-success" id="copyBtn">Copy Text with Links</button>
+      <button class="btn btn-outline-danger" id="resetBtn">Reset</button>
     </div>
 
     <div id="output" class="border rounded p-3"></div>
@@ -44,8 +51,28 @@
   <iframe id="copyFrame"></iframe>
 
   <script>
+    const STORAGE_KEY = 'tool_text-link-active_data';
+
     function escapeHTML(str) {
       return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          textInput: document.getElementById('textInput').value,
+          outputHTML: document.getElementById('output').innerHTML
+        }));
+      } catch (e) { console.error('Could not save data:', e); }
+    }
+
+    function loadState() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+      catch (e) { saved = null; }
+      if (!saved) return;
+      if (typeof saved.textInput === 'string') document.getElementById('textInput').value = saved.textInput;
+      if (typeof saved.outputHTML === 'string') document.getElementById('output').innerHTML = saved.outputHTML;
     }
 
     function convertToLinks() {
@@ -63,19 +90,44 @@
       }
 
       document.getElementById('output').innerHTML = html;
+      saveState();
     }
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('copyBtn');
       const html = document.getElementById('output').innerHTML;
+      if (!html.trim()) {
+        alert("Nothing to copy yet — convert some text first.");
+        return;
+      }
       const blob = new Blob([html], { type: "text/html" });
       const data = [new ClipboardItem({ "text/html": blob })];
+      const originalText = btn.textContent;
       try {
         await navigator.clipboard.write(data);
-        alert("Formatted content copied!");
+        btn.textContent = "Copied!";
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
       } catch (err) {
-        alert("Failed to copy: " + err);
+        btn.textContent = "Copy failed";
       }
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-success');
+      }, 1500);
     });
+
+    document.getElementById('textInput').addEventListener('input', saveState);
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (!confirm("Reset this tab's saved data? This cannot be undone.")) return;
+      document.getElementById('textInput').value = '';
+      document.getElementById('output').innerHTML = '';
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    });
+
+    loadState();
   </script>
 </body>
 </html>

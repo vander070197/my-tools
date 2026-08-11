@@ -2,20 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>List Splitter by Group Size</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    body { background: #f4f6f9; }
     pre {
       background: #1e1e1e;
       color: #eee;
       padding: 15px;
       border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      margin-bottom: 0;
+    }
+    #resultContainer:empty::after {
+      content: "Enter items and click Generate Sections to split them into groups.";
+      color: #9aa1ac;
+      font-style: italic;
+      display: block;
+      padding: 4px 2px;
+    }
+    @media (max-width: 576px) {
+      .container.py-5 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+      .card-body { padding: 1rem; }
     }
   </style>
 </head>
 <body class="bg-light">
 
-<div class="container py-5" style="max-width: 900px;">
+<div class="container py-4 py-md-5 px-3" style="max-width: 900px;">
 
   <div class="card shadow">
     <div class="card-header bg-primary text-white">
@@ -42,7 +59,10 @@ Item 3
       </select>
 
       <!-- Button -->
-      <button id="generateBtn" class="btn btn-success mb-4">Generate Sections</button>
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <button id="generateBtn" class="btn btn-success">Generate Sections</button>
+        <button id="resetBtn" class="btn btn-outline-danger">Reset</button>
+      </div>
 
       <!-- Results (Accordion) -->
       <div id="resultContainer" class="accordion"></div>
@@ -54,11 +74,35 @@ Item 3
 
 <script>
   const generateBtn = document.getElementById("generateBtn");
+  const resetBtn = document.getElementById("resetBtn");
   const listInput = document.getElementById("listInput");
   const groupSize = document.getElementById("groupSize");
   const resultContainer = document.getElementById("resultContainer");
 
-  generateBtn.addEventListener("click", () => {
+  const STORAGE_KEY = 'tool_list-group-splitter_data';
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        listInput: listInput.value,
+        groupSize: groupSize.value
+      }));
+    } catch (e) { console.error('Could not save data:', e); }
+  }
+
+  function loadState() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+    catch (e) { saved = null; }
+    if (!saved) return;
+    if (typeof saved.listInput === 'string') listInput.value = saved.listInput;
+    if (typeof saved.groupSize === 'string') groupSize.value = saved.groupSize;
+    if (saved.listInput && saved.listInput.trim() !== '') {
+      generateSections();
+    }
+  }
+
+  function generateSections() {
     const items = listInput.value.split("\n").map(a => a.trim()).filter(a => a !== "");
     const size = parseInt(groupSize.value);
 
@@ -107,8 +151,25 @@ Item 3
         setTimeout(() => btn.textContent = "Copy", 1500);
       });
     });
+  }
 
+  generateBtn.addEventListener("click", () => {
+    generateSections();
+    saveState();
   });
+
+  listInput.addEventListener("input", saveState);
+  groupSize.addEventListener("change", saveState);
+
+  resetBtn.addEventListener("click", () => {
+    if (!confirm("Reset this tab's saved data? This cannot be undone.")) return;
+    listInput.value = "";
+    groupSize.value = "10";
+    resultContainer.innerHTML = "";
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  });
+
+  loadState();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

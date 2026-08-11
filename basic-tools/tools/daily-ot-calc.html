@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OT Time Calculator</title>
 
 <!-- Bootstrap 5 -->
@@ -32,11 +33,20 @@ body { background:#f4f6f9; }
 .select2-selection__arrow {
     height: 38px !important;
 }
+.preview-box:empty::after {
+    content: "Fill out the form and click Generate to see a preview here.";
+    color: #9aa1ac;
+    font-style: italic;
+}
+@media (max-width: 576px) {
+  .container.mt-5 { margin-top: 1.25rem !important; }
+  .card-body { padding: 1rem; }
+}
 </style>
 </head>
 <body>
 
-<div class="container mt-5">
+<div class="container mt-3 mt-md-5 px-3">
 <div class="card shadow">
 <div class="card-header bg-primary text-white">
     OT Request Generator
@@ -45,22 +55,22 @@ body { background:#f4f6f9; }
 <div class="card-body">
 <div class="row g-3">
 
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
         <label class="form-label">Name</label>
         <input type="text" id="name" class="form-control" value="Reyvander">
     </div>
 
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
         <label class="form-label">Date</label>
         <input type="date" id="date" class="form-control">
     </div>
 
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
         <label class="form-label">Start Time</label>
         <input type="text" class="form-control" value="6:00 PM" readonly>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
         <label class="form-label">End Time (Searchable)</label>
         <select id="endTime" class="form-select">
             <option value="">Select End Time</option>
@@ -76,7 +86,8 @@ body { background:#f4f6f9; }
         </div>
     </div>
 
-    <div class="col-12 text-end">
+    <div class="col-12 d-flex flex-wrap justify-content-end gap-2">
+        <button class="btn btn-outline-secondary" id="resetBtn">Reset</button>
         <button class="btn btn-success" id="generateBtn">Generate</button>
     </div>
 
@@ -105,6 +116,8 @@ body { background:#f4f6f9; }
 
 <script>
 $(document).ready(function(){
+
+    const STORAGE_KEY = 'tool_daily-ot-calc_data';
 
     // Auto today's date
     const today = new Date().toISOString().split('T')[0];
@@ -148,6 +161,60 @@ $(document).ready(function(){
         placeholder: "Search or select end time",
         width: '100%'
     });
+
+    // ---------- Persistence ----------
+    function saveState() {
+        const state = {
+            name: $("#name").val(),
+            date: $("#date").val(),
+            endTime: $("#endTime").val(),
+            taskLink: $("#taskLink").val(),
+            previewResult: $("#previewResult").text(),
+            hasResult: !$("#copyBtn").hasClass("d-none")
+        };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) { console.error('Could not save data:', e); }
+    }
+
+    function loadState() {
+        let saved = null;
+        try {
+            saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        } catch (e) { saved = null; }
+        if (!saved) return;
+
+        if (typeof saved.name === 'string') $("#name").val(saved.name);
+        if (typeof saved.date === 'string' && saved.date) $("#date").val(saved.date);
+        if (typeof saved.endTime === 'string' && saved.endTime) {
+            $("#endTime").val(saved.endTime).trigger('change');
+        }
+        if (typeof saved.taskLink === 'string') $("#taskLink").val(saved.taskLink);
+        if (saved.previewResult) {
+            $("#previewResult").text(saved.previewResult);
+        }
+        if (saved.hasResult) {
+            $("#copyBtn").removeClass("d-none");
+        }
+    }
+
+    $("#name, #date, #taskLink").on("input change", saveState);
+    $("#endTime").on("change", saveState);
+
+    $("#resetBtn").on("click", function(){
+        if (!confirm('Reset this tab\'s saved data? This cannot be undone.')) return;
+        $("#name").val("Reyvander");
+        $("#date").val(today);
+        $("#endTime").val(null).trigger('change');
+        $("#taskLink").val("");
+        $("#taskLink").removeClass("is-invalid");
+        $("#linkFeedback").addClass("d-none");
+        $("#previewResult").text("");
+        $("#copyBtn").addClass("d-none");
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    });
+
+    loadState();
 
     function validateTaskLink(link){
         const pattern = /^https:\/\/office\.orchestra\.tools\/tasks\/viewtask\/\d+$/;
@@ -219,6 +286,7 @@ ${link}`;
 
         $("#previewResult").text(result);
         $("#copyBtn").removeClass("d-none");
+        saveState();
     });
 
     $("#copyBtn").click(function(){

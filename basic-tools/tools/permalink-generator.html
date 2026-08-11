@@ -22,6 +22,18 @@
         font-family:monospace;
         word-break:break-all;
     }
+    #resultContainer:empty::before {
+        content: "Generated permalinks will appear here.";
+        color: #9aa1ac;
+        font-style: italic;
+        display: block;
+        padding: 4px 2px;
+    }
+    @media (max-width: 576px) {
+        .container.py-5 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+        .result-box { flex-direction: column; align-items: flex-start !important; gap: 8px; }
+        .result-box .btn { align-self: flex-end; }
+    }
 </style>
 </head>
 <body>
@@ -37,9 +49,14 @@
 
                     <textarea id="titleInput" class="form-control mb-3" rows="6" placeholder="Enter titles (one per line)..."></textarea>
 
-                    <button id="generateBtn" class="btn btn-primary w-100">
-                        Generate Permalink
-                    </button>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="generateBtn" class="btn btn-primary flex-grow-1">
+                            Generate Permalink
+                        </button>
+                        <button id="resetBtn" class="btn btn-outline-danger">
+                            Reset
+                        </button>
+                    </div>
 
                 </div>
             </div>
@@ -54,6 +71,37 @@
 
 <script>
 $(document).ready(function(){
+
+    const STORAGE_KEY = 'tool_permalink-generator_data';
+
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                titleInput: $("#titleInput").val(),
+                resultHTML: $("#resultContainer").html()
+            }));
+        } catch (e) { console.error('Could not save data:', e); }
+    }
+
+    function loadState() {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+        catch (e) { saved = null; }
+        if (!saved) return;
+        if (typeof saved.titleInput === 'string') $("#titleInput").val(saved.titleInput);
+        if (typeof saved.resultHTML === 'string') $("#resultContainer").html(saved.resultHTML);
+    }
+
+    $("#titleInput").on('input', saveState);
+
+    $("#resetBtn").on('click', function(){
+        if (!confirm('Reset this tab\'s saved data? This cannot be undone.')) return;
+        $("#titleInput").val('');
+        $("#resultContainer").html('');
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    });
+
+    loadState();
 
     $("#generateBtn").click(function(){
 
@@ -83,6 +131,7 @@ $(document).ready(function(){
             $("#resultContainer").append(resultHTML);
         });
 
+        saveState();
     });
 
     $(document).on("click", ".copyBtn", function(){

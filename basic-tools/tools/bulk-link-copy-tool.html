@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Link Copier</title>
 
 <!-- Bootstrap 5 -->
@@ -23,15 +24,20 @@ body { background: #f8f9fa; }
     background: #fff;
 }
 .link-text { word-break: break-all; flex: 1; }
+#linkList:empty::after {
+    content: "Your links will show up here after you click Generate Links.";
+    color: #9aa1ac;
+    font-style: italic;
+}
 </style>
 </head>
 <body>
 
-<div class="container py-5">
+<div class="container py-4 py-md-5 px-3" style="max-width: 900px;">
     <h3 class="mb-3">Bulk Link Copy Tool</h3>
 
     <!-- Counters -->
-    <div class="mb-3">
+    <div class="mb-3 d-flex flex-wrap gap-2">
         <span class="badge bg-primary">Total Links: <span id="totalLinks">0</span></span>
         <span class="badge bg-success">Copied: <span id="copiedLinks">0</span></span>
     </div>
@@ -42,9 +48,14 @@ body { background: #f8f9fa; }
         <textarea id="linkInput" class="form-control" rows="6" placeholder="https://example.com"></textarea>
     </div>
 
-    <button id="generateLinks" class="btn btn-primary mb-4">
-        <i class="bi bi-list-ul me-1"></i> Generate Links
-    </button>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+      <button id="generateLinks" class="btn btn-primary">
+          <i class="bi bi-list-ul me-1"></i> Generate Links
+      </button>
+      <button id="resetBtn" class="btn btn-outline-danger">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+      </button>
+    </div>
 
     <!-- Generated list -->
     <div id="linkList" class="d-grid gap-2"></div>
@@ -72,8 +83,61 @@ body { background: #f8f9fa; }
 <script>
 $(document).ready(function () {
 
+    const STORAGE_KEY = 'tool_bulk-link-copy-tool_data';
+
     let copiedCount = 0;
     let uniqueLinks = [];
+
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                linkInput: $('#linkInput').val(),
+                uniqueLinks: uniqueLinks,
+                copiedLinks: $('#linkList .copy-btn.btn-success').map(function(){
+                    return $(this).data('link');
+                }).get()
+            }));
+        } catch (e) { console.error('Could not save data:', e); }
+    }
+
+    function loadState() {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+        catch (e) { saved = null; }
+        if (!saved) return;
+
+        if (typeof saved.linkInput === 'string') $('#linkInput').val(saved.linkInput);
+
+        if (Array.isArray(saved.uniqueLinks) && saved.uniqueLinks.length) {
+            uniqueLinks = saved.uniqueLinks;
+            $('#totalLinks').text(uniqueLinks.length);
+            renderLinks(uniqueLinks);
+
+            const copiedSet = new Set(saved.copiedLinks || []);
+            copiedCount = 0;
+            $('#linkList .copy-btn').each(function () {
+                if (copiedSet.has($(this).data('link'))) {
+                    copiedCount++;
+                    $(this).removeClass('btn-outline-secondary').addClass('btn-success')
+                        .html('<i class="bi bi-check-circle"></i>').prop('disabled', true);
+                }
+            });
+            $('#copiedLinks').text(copiedCount);
+        }
+    }
+
+    $('#linkInput').on('input', saveState);
+
+    $('#resetBtn').on('click', function () {
+        if (!confirm('Reset this tab\'s saved data? This cannot be undone.')) return;
+        $('#linkInput').val('');
+        $('#linkList').empty();
+        $('#totalLinks').text(0);
+        $('#copiedLinks').text(0);
+        copiedCount = 0;
+        uniqueLinks = [];
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    });
 
     $('#generateLinks').on('click', function () {
         const input = $('#linkInput').val().trim();
@@ -109,6 +173,7 @@ $(document).ready(function () {
         }
 
         renderLinks(uniqueLinks);
+        saveState();
     });
 
     $('#removeDuplicatesBtn').on('click', function () {
@@ -116,6 +181,7 @@ $(document).ready(function () {
         $('#linkInput').val(uniqueLinks.join('\n'));
         $('#duplicateModal').modal('hide');
         renderLinks(uniqueLinks);
+        saveState();
     });
 
     function renderLinks(links) {
@@ -142,8 +208,11 @@ $(document).ready(function () {
             $('#copiedLinks').text(copiedCount);
             btn.removeClass('btn-outline-secondary').addClass('btn-success')
                .html('<i class="bi bi-check-circle"></i>').prop('disabled', true);
+            saveState();
         });
     });
+
+    loadState();
 
 });
 </script>
